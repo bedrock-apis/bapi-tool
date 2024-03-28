@@ -9,7 +9,7 @@
     "url": "git+https://github.com/bedrock-apis/bapi-tool.git"
   },
   "bin": {
-    "bapi-tool": "./dist/tool.js"
+    "bapi-tool": "./bin/bapi-tool"
   },
   "author": "conmaster2112",
   "license": "Apache-2.0",
@@ -19,5 +19,9 @@
   "homepage": "https://github.com/bedrock-apis/bapi-tool#readme",
   "devDependencies": {
     "@types/node": "^20.11.30"
+  },
+  "dependencies": {
+    "chokidar": "^3.6.0",
+    "commander": "^12.0.0"
   }
 }

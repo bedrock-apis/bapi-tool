@@ -1,0 +1,8 @@
+{
+   "name": "testing",
+   "version": "0.1.0",
+   "bapi-tool": {
+      "behavior_packs": "./behavior_packs",
+      "resource_packs": "./behavior_packs"
+   }
+}
