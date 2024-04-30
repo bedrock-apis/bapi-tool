@@ -2,14 +2,18 @@
   "name": "bapi-tool",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
-  "scripts": {},
+  "main": "dist/index.js",
+  "scripts": {
+    "init":"npm i & npm run test & npm run link",
+    "test":"tsc & node .",
+    "link":"npm link -l"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bedrock-apis/bapi-tool.git"
   },
   "bin": {
-    "bapi-tool": "./bin/bapi-tool"
+    "bapi": "./bin/bapi"
   },
   "author": "conmaster2112",
   "license": "Apache-2.0",
@@ -21,7 +25,11 @@
     "@types/node": "^20.11.30"
   },
   "dependencies": {
+    "@babel/generator": "^7.24.4",
+    "@babel/parser": "^7.24.4",
     "chokidar": "^3.6.0",
-    "commander": "^12.0.0"
+    "commander": "^12.0.0",
+    "comment-json": "^4.2.3",
+    "jszip": "^3.10.1"
   }
 }

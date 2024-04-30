@@ -1,0 +1,12 @@
+## Main
+ - Improve Config
+ - Improve Conext
+ - Improve Pakcs
+ - Improve Plugins
+ - Improve run command
+ - Improve init command
+ - Improve export command
+ - Implement info fetching
+ - Implement watch command
+ - Implement pakcages bundler
+ - Implement clean command
