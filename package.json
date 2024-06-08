@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "init": "npm i & npm run test & npm run link",
+    "init": "npm i & npm run build & npm run link",
     "build": "tsc",
     "link": "npm link -l"
   },

@@ -1,9 +1,0 @@
-{
-   "packs": {},
-   "bapi": {
-      "exportOptions": {
-         "outDir": ".",
-         "exportType": "mcaddon"
-      }
-   }
-}
