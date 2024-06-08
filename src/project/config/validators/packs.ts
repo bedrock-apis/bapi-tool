@@ -1,4 +1,4 @@
-import { CompoudValueValidator, StringValueValidator } from "../../json-validator";
+import { CompoudValueValidator, StringValueValidator } from "../../../utils/json-validator";
 
 export class PacksValueValidator extends CompoudValueValidator{
     constructor(){

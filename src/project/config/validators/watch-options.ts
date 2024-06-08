@@ -1,5 +1,5 @@
 import { ProjectWatchMode } from "../../../enums";
-import { CompoudValueValidator, MultipleValueValidator } from "../../json-validator";
+import { CompoudValueValidator, MultipleValueValidator } from "../../../utils/json-validator";
 
 export class BapiWatchOptionsValidator extends CompoudValueValidator{
     constructor(){

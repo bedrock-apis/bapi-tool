@@ -1,4 +1,4 @@
-import { CompoudValueValidator, GeneralValidators, StringValueValidator } from "../json-validator";
+import { CompoudValueValidator, GeneralValidators, StringValueValidator } from "../../utils/json-validator";
 import { BapiValueValidator, PacksValueValidator } from "./validators";
 export const CONFIG_VALIDATOR = new CompoudValueValidator();
 

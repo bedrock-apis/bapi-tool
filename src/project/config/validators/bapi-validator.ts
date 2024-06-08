@@ -1,4 +1,4 @@
-import { ArrayValueValidator, CompoudValueValidator } from "../../json-validator";
+import { ArrayValueValidator, CompoudValueValidator } from "../../../utils/json-validator";
 import { BapiExportOptionsValidator } from "./export-options";
 import { BapiPluginValidator } from "./plugin";
 import { BapiWatchOptionsValidator } from "./watch-options";

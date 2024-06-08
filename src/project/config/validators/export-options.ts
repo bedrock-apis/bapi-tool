@@ -1,5 +1,5 @@
 import { ProjectExportType } from "../../../enums";
-import { CompoudValueValidator, MultipleValueValidator, StringValueValidator } from "../../json-validator";
+import { CompoudValueValidator, MultipleValueValidator, StringValueValidator } from "../../../utils/json-validator";
 
 export class BapiExportOptionsValidator extends CompoudValueValidator{
     constructor(){
