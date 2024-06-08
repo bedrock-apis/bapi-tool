@@ -1,12 +1,13 @@
 import * as PATH from "path";
 import FS, {promises as PFS} from "fs";
-import { VirtualEntryType, VirtualDirectory, VirtualEntry, VirtualFile } from "../virtual";
+import { VirtualDirectory, VirtualEntry, VirtualFile } from "../virtual";
 import { PhysicalFile } from "./physical-file";
+import { VirtualEntryType } from "../../enums";
 
 export class PhysicalDirectory extends VirtualDirectory{
-    public directory: PhysicalDirectory = null;
+    public directory: PhysicalDirectory | null = null;
     public name: string;
-    public get relativePath(){
+    public get relativePath(): string{
         if(this.directory) return this.directory.relativePath + "/" + this.name;
         else return this.name;
     }
@@ -26,15 +27,15 @@ export class PhysicalDirectory extends VirtualDirectory{
             }
         }
     }
-    public *getFiles(recursive?: boolean): Iterable<PhysicalFile> { for(const file of this.getEntries(recursive)) if(file.type === VirtualEntryType.File) yield file; }
-    public *getDirectories(recursive?: boolean): Iterable<PhysicalDirectory> {  for(const dir of this.getEntries(recursive)) if(dir.type === VirtualEntryType.Directory) yield dir; }
+    public *getFiles(recursive?: boolean): Iterable<PhysicalFile> { for(const file of this.getEntries(recursive)) if(file.type === VirtualEntryType.File) yield  file as PhysicalFile; }
+    public *getDirectories(recursive?: boolean): Iterable<PhysicalDirectory> {  for(const dir of this.getEntries(recursive)) if(dir.type === VirtualEntryType.Directory) yield dir as PhysicalDirectory; }
     public openFile(name: string): VirtualFile { return new PhysicalFile(this, name); }
     public openDirectory(name: string): PhysicalDirectory { return new PhysicalDirectory(name, this); }
     public entryExist(name: string): Promise<boolean> { return Promise.resolve(FS.existsSync(this.relativePath + "/" + name)); }
     public getExist(): Promise<boolean> { return Promise.resolve(FS.existsSync(this.relativePath)); }
     public __readFileAsync(name: string): Promise<Buffer> { return PFS.readFile(this.relativePath + "/" + name); }
     public async __writeFileAsync(name: string, data: Buffer | string): Promise<Error | void> {
-        let success: Error | void;
+        let success: Error | void = undefined;
         await PFS.writeFile(this.relativePath + "/" + name, data).catch(e=>success = e);
         return success;
     }

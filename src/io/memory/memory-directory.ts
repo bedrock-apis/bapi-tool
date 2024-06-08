@@ -1,10 +1,11 @@
-import { VirtualEntryType, VirtualDirectory, VirtualFile } from "../virtual";
+import { VirtualEntryType } from "../../enums";
+import { VirtualDirectory, VirtualFile } from "../virtual";
 import { MemoryFile } from "./memory-file";
 
 export class MemoryDirectory extends VirtualDirectory{
-    public directory: MemoryDirectory = null;
+    public directory: MemoryDirectory | null = null;
     public name: string;
-    public get relativePath(){
+    public get relativePath(): string{
         if(this.directory) return this.directory.relativePath + "/" + this.name;
         else return this.name;
     }
@@ -22,8 +23,8 @@ export class MemoryDirectory extends VirtualDirectory{
             if(recursive) yield * dir.getEntries(recursive);
         }
     }
-    public *getFiles(recursive?: boolean): Iterable<MemoryFile> { for(const file of this.getEntries(recursive)) if(file.type === VirtualEntryType.File) yield file; }
-    public *getDirectories(recursive?: boolean): Iterable<MemoryDirectory> {  for(const dir of this.getEntries(recursive)) if(dir.type === VirtualEntryType.Directory) yield dir; }
+    public *getFiles(recursive?: boolean): Iterable<MemoryFile> { for(const file of this.getEntries(recursive)) if(file.type === VirtualEntryType.File) yield file as MemoryFile; }
+    public *getDirectories(recursive?: boolean): Iterable<MemoryDirectory> {  for(const dir of this.getEntries(recursive)) if(dir.type === VirtualEntryType.Directory) yield dir as MemoryDirectory; }
     public openFile(name: string): VirtualFile {
         if(!this.__files.has(name)){ this.__files.set(name, Buffer.from("")); }
         return new MemoryFile(this, name);
@@ -35,12 +36,16 @@ export class MemoryDirectory extends VirtualDirectory{
     }
     public entryExist(name: string): Promise<boolean> { return Promise.resolve(this.__files.has(name) || this.__directories.has(name)); }
     public getExist(): Promise<boolean> { return Promise.resolve(true); }
-    public __readFileAsync(name: string): Promise<Buffer> { return Promise.resolve(this.__files.get(name)); }
-    public __writeFileAsync(name: string, data: Buffer | string): Promise<Error | void> {
+    public async __readFileAsync(name: string): Promise<Buffer> {
+        const buffer = this.__files.get(name);
+        if(!buffer) throw new ReferenceError("File not found: " + name + " in " + this.relativePath);
+        return buffer;
+    }
+    public async __writeFileAsync(name: string, data: Buffer | string): Promise<Error | void> {
         try {
             this.__files.set(name, typeof data === "string"?Buffer.from(data):data);
-        } catch (error) {
-            return Promise.resolve(error);
+        } catch (error: any) {
+            return error;
         }
     }
     public async __deleteFileAsync(name: string): Promise<boolean> { return this.__files.delete(name); }

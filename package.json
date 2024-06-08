@@ -4,9 +4,9 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "init":"npm i & npm run test & npm run link",
-    "test":"tsc & node .",
-    "link":"npm link -l"
+    "init": "npm i & npm run test & npm run link",
+    "build": "tsc",
+    "link": "npm link -l"
   },
   "repository": {
     "type": "git",

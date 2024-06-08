@@ -1,4 +1,4 @@
-import { VirtualEntryType, VirtualFile } from "../virtual";
+import { VirtualFile } from "../virtual";
 import { MemoryDirectory } from "./memory-directory";
 
 export class MemoryFile extends VirtualFile{

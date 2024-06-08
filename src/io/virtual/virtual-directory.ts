@@ -1,4 +1,5 @@
-import { VirtualEntry, VirtualEntryType } from "./virtual-entry";
+import { VirtualEntryType } from "../../enums";
+import { VirtualEntry } from "./virtual-entry";
 import { VirtualFile } from "./virtual-file";
 
 export abstract class VirtualDirectory extends VirtualEntry<VirtualEntryType.Directory>{

@@ -1,4 +1,4 @@
-import { VirtualEntryType, VirtualFile } from "../virtual";
+import { VirtualFile } from "../virtual";
 import { PhysicalDirectory } from "./physical-directory";
 
 export class PhysicalFile extends VirtualFile{
