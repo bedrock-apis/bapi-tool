@@ -63,6 +63,11 @@ export const QUESTIONS: Question[] = [
                         name: "Resource Pack",
                         default: "./packs/RP",
                         propertyName:"packs.resourcePack",
+                    },
+                    {
+                        name: "Use Scripts",
+                        default: "yes",
+                        propertyName:"init.options",
                     }
                 ];
             }

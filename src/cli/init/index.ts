@@ -1,4 +1,5 @@
 import { ERROR_COLOR, PRIMARY_COLOR, SECONDARY_COLOR } from "../../consts";
+import { ProjectConfig, ProjectContext } from "../../project";
 import { console, ConsoleColor } from "../../utils";
 import { ConsoleReader } from "../../utils/Console/ConsoleReader";
 import { context } from "../base";
@@ -13,10 +14,15 @@ context.then(context=>{
         const reader = console.CreateReader();
         await ProccessQuestions(QUESTIONS, reader, config);
         reader.close();
+        InitProject(context);
+        delete context.config.rawObject.init;
         context.config.save();
     }));
 })
-
+async function InitProject(context: ProjectContext) {
+    const relativeDirectory = context.config.sourceFile.directory??context.workingDirectory;
+    console.warn(relativeDirectory?.relativePath);
+}
 async function ProccessQuestions(questions: Question[], reader: ConsoleReader, config: any){
     for(const q of questions){
         while(true){

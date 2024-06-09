@@ -2,5 +2,5 @@ import { VirtualDirectory } from "./io";
 import { ProjectContext } from "./project";
 import { ConsoleColor } from "./utils";
 
-export function GetContext(dir: VirtualDirectory) { return ProjectContext.OpenProject(dir); }
+export function GetContext(dir: VirtualDirectory) { return ProjectContext.OpenProject(dir, false); }
 process.on("beforeExit", ()=>console.log(ConsoleColor.RESET));
