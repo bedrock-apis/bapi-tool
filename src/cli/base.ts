@@ -3,8 +3,7 @@ import { PhysicalDirectory } from "../io";
 import { GetContext } from "../init";
 
 program.action((e)=>{ console.log(program.helpInformation()); });
-export const context = GetContext(new PhysicalDirectory("."));
-const time = performance.now();
-context.loaded.then((context)=>{
+export const context = GetContext(new PhysicalDirectory(".", null));
+context.then((context)=>{
     program.parse(process.argv);
 });

@@ -1,4 +1,3 @@
-
 // Config options for project file watching
 export enum ProjectWatchMode{
     "general" = "general",

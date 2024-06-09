@@ -1,4 +1,4 @@
-import { ProjectConfig } from "../project/config/project-config";
+import { ProjectConfig } from "../../src/project/config/project-config";
 import { ExtendableClasses } from "./EXTENDABLE_CLASSES";
 import { Plugin } from "./plugin";
 

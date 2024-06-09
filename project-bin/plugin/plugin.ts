@@ -1,4 +1,4 @@
-import { ProjectContext } from "../project/project-context";
+import { ProjectContext } from "../../src/project/project-context";
 import { ExtendableClasses } from "./EXTENDABLE_CLASSES";
 import { PLUGIN_MANAGER } from "./plugin-manager";
 

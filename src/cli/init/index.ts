@@ -4,16 +4,18 @@ import { ConsoleReader } from "../../utils/Console/ConsoleReader";
 import { context } from "../base";
 import { Question, QUESTIONS } from "./questions";
 
-context.context.projectCommands.registryCommand("init", e=>e.description("Initialize new project").option("-f, --force", "Froces the creation.").action(async (...options)=>{
-    const [{force=false}] = options;
-    let config = context.context.config.rawObject;
-    if(config && !force) return console.error(ERROR_COLOR + "Project config already exists.");
-    context.context.config.rawObject = config = {};
-    const reader = console.CreateReader();
-    await ProccessQuerstions(QUESTIONS, reader, config);
-    reader.close();
-    context.context.config.save();
-}));
+context.then(context=>{
+    context.projectCommands.registryCommand("init", e=>e.description("Initialize new project").option("-f, --force", "Froces the creation.").action(async (...options)=>{
+        const [{force=false}] = options;
+        let config = context.config.rawObject;
+        if(config && !force) return console.error(ERROR_COLOR + "Project config already exists.");
+        context.config.rawObject = config = {};
+        const reader = console.CreateReader();
+        await ProccessQuerstions(QUESTIONS, reader, config);
+        reader.close();
+        context.config.save();
+    }));
+})
 
 async function ProccessQuerstions(questions: Question[], reader: ConsoleReader, config: any){
     for(const q of questions){

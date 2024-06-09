@@ -1,4 +1,4 @@
-import { VirtualEntryType } from "../../enums";
+import { VirtualEntryType } from "../virtual-entry-type";
 import { VirtualDirectory, VirtualFile } from "../virtual";
 import { MemoryFile } from "./memory-file";
 
@@ -35,7 +35,7 @@ export class MemoryDirectory extends VirtualDirectory{
         return dir;
     }
     public entryExist(name: string): Promise<boolean> { return Promise.resolve(this.__files.has(name) || this.__directories.has(name)); }
-    public getExist(): Promise<boolean> { return Promise.resolve(true); }
+    public isValid(): Promise<boolean> { return Promise.resolve(true); }
     public async __readFileAsync(name: string): Promise<Buffer> {
         const buffer = this.__files.get(name);
         if(!buffer) throw new ReferenceError("File not found: " + name + " in " + this.relativePath);

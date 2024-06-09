@@ -9,7 +9,7 @@ export class ProjectConfig{
      * Return and virtual source
      * @readonly
      */
-    public readonly source: VirtualFile;
+    public readonly source: VirtualFile<boolean>;
     /**
      * Is config Loaded
      * @readonly
@@ -18,7 +18,7 @@ export class ProjectConfig{
 
 
     public rawObject: any;
-    public constructor(source: VirtualFile){
+    public constructor(source: VirtualFile<boolean>){
         this.source = source;
     }
 
@@ -27,8 +27,8 @@ export class ProjectConfig{
      * @returns Promise with self reference
      */
     async load(){
-        if(!await this.source.getExist()) throw new Error("Config file not found: " + this.source.name);
-        const data = await this.source.readData();
+        if(!await this.source.isValid()) throw new Error("Config file not found: " + this.source.name);
+        const data = await this.source.readFile();
         try {
             const rawObject = JSON.parse(data.toString());
             this.rawObject = rawObject;
@@ -46,7 +46,7 @@ export class ProjectConfig{
         if(!this.isLoaded) throw new Error("Config must be loaded before saving.");
         try {
             const data = JSON.stringify(this.rawObject, null, "   ");
-            if(await this.source.writeData(data)) throw new Error("Faild to write data to the source file");
+            await this.source.writeFile(data)
             return this;
         } catch (error: any) {
             throw new Error("Faild to save config file: " + error.message);
