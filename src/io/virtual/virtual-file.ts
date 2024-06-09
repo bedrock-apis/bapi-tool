@@ -12,8 +12,4 @@ export abstract class VirtualFile<Nullable extends boolean = true> extends Virtu
      * Reads a data from this file.
      */
     public abstract readFile(): Promise<Buffer>;
-    /**
-     * Deletes this file and returns if the deletion success.
-     */
-    public abstract deleteFile(): Promise<boolean>;
 }

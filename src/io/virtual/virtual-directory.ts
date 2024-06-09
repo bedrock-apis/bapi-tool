@@ -24,11 +24,31 @@ export abstract class VirtualDirectory<Nullable extends boolean = true> extends 
      */
     public abstract getDirectories(recursive?: boolean): AsyncIterable<VirtualDirectory<false>>;
     /**
-     * Returns an file instance by its name
+     * Returns true when file with this name exists
      */
     public abstract hasFile(name: string): Promise<boolean>;
+    /**
+     * Returns true when directory with this name exists
+     */
     public abstract hasDirectory(name: string): Promise<boolean>;
+    /**
+     * Returns true when entry with this name exists
+     */
     public abstract hasEntry(name: string): Promise<boolean>;
+    /**
+     * Returns a file instance by its name
+     */
     public abstract getFile(name: string): Promise<VirtualFile<false> | null>;
+    /**
+     * Returns a directory instance by its name
+     */
     public abstract getDirectory(name: string): Promise<VirtualDirectory<false> | null>;
+    /**
+     * Creates new file instance with specified name
+     */
+    public abstract createFile(name: string): Promise<VirtualFile<false>>;
+    /**
+     * Creates new directory instance with specified name
+     */
+    public abstract createDirectory(name: string): Promise<VirtualDirectory<false>>;
 }

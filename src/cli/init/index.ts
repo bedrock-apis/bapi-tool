@@ -11,13 +11,13 @@ context.then(context=>{
         if(config && !force) return console.error(ERROR_COLOR + "Project config already exists.");
         context.config.rawObject = config = {};
         const reader = console.CreateReader();
-        await ProccessQuerstions(QUESTIONS, reader, config);
+        await ProccessQuestions(QUESTIONS, reader, config);
         reader.close();
         context.config.save();
     }));
 })
 
-async function ProccessQuerstions(questions: Question[], reader: ConsoleReader, config: any){
+async function ProccessQuestions(questions: Question[], reader: ConsoleReader, config: any){
     for(const q of questions){
         while(true){
             const {name, default: def, getQuestions, isInvalid, propertyName, setValue, map} = q;
@@ -26,7 +26,7 @@ async function ProccessQuerstions(questions: Question[], reader: ConsoleReader, 
             data = (data.length>0?data:def)??"";
             if(isInvalid?.call(q, data)) continue;
             const moreQuestions = getQuestions?.call(q,data);
-            if(moreQuestions) await ProccessQuerstions(moreQuestions, reader, config);
+            if(moreQuestions) await ProccessQuestions(moreQuestions, reader, config);
             setValue?.call(q, config, data);
             if(propertyName) {
                 const pathTo = propertyName.split(".");

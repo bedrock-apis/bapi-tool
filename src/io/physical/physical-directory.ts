@@ -1,5 +1,5 @@
 import FS, {promises as PFS} from "fs";
-import { VirtualDirectory } from "../virtual";
+import { VirtualDirectory, VirtualFile } from "../virtual";
 import { PhysicalFile } from "./physical-file";
 
 export class PhysicalDirectory<Nullable extends boolean = true> extends VirtualDirectory<Nullable>{
@@ -55,4 +55,19 @@ export class PhysicalDirectory<Nullable extends boolean = true> extends VirtualD
         else return null;
     }
     public async isValid(): Promise<boolean> { return FS.existsSync(this.relativePath); }
+    public async delete(): Promise<boolean> { 
+        if(!this.isValid()) return false;
+        const tasks = [];
+        for await(const entry of this.getEntries()){
+            tasks.push(entry.delete());
+        }
+        await Promise.all(tasks);
+        return PFS.rmdir(this.relativePath).then(e=>true, e=>false);
+    }
+    public createFile(name: string): Promise<VirtualFile<false>> {
+        throw new Error("Method not implemented.");
+    }
+    public createDirectory(name: string): Promise<VirtualDirectory<false>> {
+        throw new Error("Method not implemented.");
+    }
 }

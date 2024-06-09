@@ -16,7 +16,6 @@ export class ProjectConfig{
      */
     public get isLoaded(){return typeof this.rawObject === "object";}
 
-
     public rawObject: any;
     public constructor(source: VirtualFile<boolean>){
         this.source = source;
@@ -52,4 +51,10 @@ export class ProjectConfig{
             throw new Error("Faild to save config file: " + error.message);
         }
     }
+    getVersion(){return this.rawObject.version as string;}
+    async setVersion(data: string){this.rawObject.version = data; await this.save(); }
+    getName(){return this.rawObject.name as string;}
+    async setName(data: string){this.rawObject.name = data; await this.save(); }
+    getAuthor(){return this.rawObject.author as string;}
+    async setAuthor(data: string){this.rawObject.author = data; await this.save(); }
 }

@@ -26,4 +26,9 @@ export abstract class VirtualEntry<T extends VirtualEntryType, Nullable extends 
      * If file or directory is no longer reachable then this should return false
      */
     public abstract isValid(): Promise<boolean>;
+    
+    /**
+     * Deletes this entry (file/directory) and returns if the deletion success.
+     */
+    public abstract delete(): Promise<boolean>;
 }
