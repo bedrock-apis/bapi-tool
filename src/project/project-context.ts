@@ -1,7 +1,8 @@
 import { program } from "commander";
 import { VirtualDirectory } from "../io";
-import { ProjectConfig, CONFIG_VALIDATOR } from "./config";
+import { ProjectConfig, CONFIG_VALIDATOR } from "./project-config";
 import { Program } from "./project-command";
+import { ValidationError } from "../utils/json-validator/validation-error";
 
 export class ProjectContext{
     protected _cli?:()=>void; 
@@ -23,18 +24,25 @@ export class ProjectContext{
      */
     public static async OpenProject(base: VirtualDirectory, validateConfig: boolean){
         const context = new ProjectContext(base);
-        const file = await base.getFile("config.json");
+        const file = (await base.hasFile("config.json"))?(await base.getFile("config.json"))!:await base.createFile("config.json");
         if(file == null) throw new ReferenceError("Faild to get file from virtual directory called 'config.json'");
         context._config = new ProjectConfig(file);
         await context._config.load();
         if(validateConfig) {
-            context.validateConfig();
+            console.log(context.validateConfig());
         }
         return context;
     }
     public static async SetCLIFor(context: ProjectContext,cli: ()=>void){
         context._cli = cli;
     }
-    validateConfig(){ CONFIG_VALIDATOR.validate(this.config.rawObject, "ROOT"); }
+    validateConfig(): ValidationError | null{
+        try {
+            CONFIG_VALIDATOR.validate(this.config.rawObject, ["ROOT"]);
+            return null;
+        } catch (error: any) {
+            return error;
+        }
+    }
     executeCLI(){ this._cli?.(); }
 }

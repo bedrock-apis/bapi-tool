@@ -1,5 +1,5 @@
 import { ERROR_COLOR, PRIMARY_COLOR, SECONDARY_COLOR } from "../../consts";
-import { ProjectConfig, ProjectContext } from "../../project";
+import { ProjectContext } from "../../project";
 import { console, ConsoleColor } from "../../utils";
 import { ConsoleReader } from "../../utils/Console/ConsoleReader";
 import { context } from "../base";
@@ -16,6 +16,7 @@ context.then(context=>{
         reader.close();
         InitProject(context);
         delete context.config.rawObject.init;
+        console.log(context.validateConfig());
         context.config.save();
     }));
 })

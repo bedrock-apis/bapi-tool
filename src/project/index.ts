@@ -1,2 +1,2 @@
 export * from "./project-context";
-export * from "./config/project-config";
+export * from "./project-config/project-config";

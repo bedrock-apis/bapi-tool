@@ -1,21 +1,17 @@
-import { ArrayValueValidator } from "./array-validator";
-import { CompoudValueValidator } from "./compoud-validator";
-import { AnyValueValidator, BooleanValueValidator, NumberValueValidator, StringValueValidator } from "./value-validator";
 
-export interface GeneralValidators {
-   readonly "String": StringValueValidator;
-   readonly "Number": NumberValueValidator;
-   readonly "Boolean": BooleanValueValidator;
-   readonly "Object": CompoudValueValidator;
-   readonly "Array": ArrayValueValidator;
-   readonly "Any": AnyValueValidator;
+import { BaseValidator } from "./base-validator";
+
+export class ValidatorLoader{
+    public static loaders = new Map<string, (data: any)=>BaseValidator>();
+    public static RegisterType(type: string, loader: (obj: any)=>BaseValidator): void{
+        this.loaders.set(type, loader);
+    }
+    public static Load(object: any): BaseValidator{ return this._load(object); }
+    public static LoadType(type: string, object: any){
+        return this.loaders.get(type)?.(object)!;
+    }
+    protected static _load(object: any): any{
+        if(typeof object.type !== "string") throw new SyntaxError("Validator data structure is not valid: " + JSON.stringify(object));
+        return this.LoadType(object.type, object);
+    }
 }
-
-export const GeneralValidators = {
-    "String": new StringValueValidator(),
-    "Number": new NumberValueValidator(),
-    "Boolean": new BooleanValueValidator(),
-    "Object": new CompoudValueValidator(),
-    "Array": new ArrayValueValidator(new AnyValueValidator()),
-    "Any": new AnyValueValidator()
-} as GeneralValidators;
