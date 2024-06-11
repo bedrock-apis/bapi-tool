@@ -20,6 +20,8 @@
  * number - number value type only
  *   - max - number
  *   - min - number
+ * 
+ * see ../json-validator/README.md
  */
 
 
