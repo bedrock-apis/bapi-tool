@@ -7,10 +7,13 @@ import { ConsoleReader } from "../../utils/Console/ConsoleReader";
 import { Question, QUESTIONS } from "./questions";
 import { CURRENT_WORKING_DIRECTORY } from "../base";
 import { COMMAND_INIT_CONFIG_EXISTS } from "../../MESSAGES";
+import { GetGithubContent } from "../../utils/functions";
 
 program.command("init").description("Initialize new project").option("-f, --force", "Froces the creation.").action(async (...options)=>{
     const [{force=false}] = options;
 
+    const ExistDataPreviewTask = GetGithubContent("https://raw.githubusercontent.com/bedrock-apis/bds-docs/preview/exist.json");
+    const ExistDataStableTask = GetGithubContent("https://raw.githubusercontent.com/bedrock-apis/bds-docs/stable/exist.json");
 
 
     //Checks if config already exists
@@ -25,10 +28,11 @@ program.command("init").description("Initialize new project").option("-f, --forc
 
     //New CLI Reader
     const reader = console.CreateReader();
-    await ProccessQuestions(QUESTIONS, reader, config.rawObject);
+    await ProccessQuestions(QUESTIONS, reader, config.rawObject, {ExistDataStableTask, ExistDataPreviewTask});
     reader.close();
     console.log(ConsoleColor.RESET);
 
+    //console.log((await ExistDataStableTask)?.toString(), (await ExistDataPreviewTask)?.toString());
 
     InitProject(context);
 
@@ -57,17 +61,17 @@ async function InitProject(context: ProjectContext) {
     }
     console.log(`Created ${addons.length} addons`);
 }
-async function ProccessQuestions(questions: Question[], reader: ConsoleReader, config: any){
+async function ProccessQuestions(questions: Question[], reader: ConsoleReader, config: any, DATA: any){
     for(const q of questions){
         while(true){
             const {name, default: def, getQuestions, isInvalid, propertyName, setValue, map} = q;
             const ask = `${ConsoleColor.RESET}${name} ${def?`${SECONDARY_COLOR}(${def}) `:""}${PRIMARY_COLOR}`;
             let data = await reader.ReadLineAsync(ask);
             data = (data.length>0?data:def)??"";
-            if(isInvalid?.call(q, data)) continue;
-            const moreQuestions = getQuestions?.call(q,data);
-            if(moreQuestions) await ProccessQuestions(moreQuestions, reader, config);
-            setValue?.call(q, config, data);
+            if(isInvalid?.call(q, data, DATA)) continue;
+            const moreQuestions = getQuestions?.call(q,data, DATA);
+            if(moreQuestions) await ProccessQuestions(moreQuestions, reader, config, DATA);
+            setValue?.call(q, config, data, DATA);
             if(propertyName) {
                 const pathTo = propertyName.split(".");
                 let object = config;
@@ -78,7 +82,7 @@ async function ProccessQuestions(questions: Question[], reader: ConsoleReader, c
                     }
                     lastProperty = property;
                 }
-                object[lastProperty!] = map?map.call(q,data):data;
+                object[lastProperty!] = map?map.call(q, data, DATA):data;
             }
             break;
         }

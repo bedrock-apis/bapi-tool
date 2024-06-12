@@ -5,5 +5,14 @@
    "packs": {
       "behaviorPack": "./packs/BP",
       "resourcePack": "./packs/RP"
+   },
+   "bapi": {
+      "exports": {
+         "default": {
+            "exportType": "mcaddon",
+            "outDire": "./releases",
+            "source": "packs"
+         }
+      }
    }
 }

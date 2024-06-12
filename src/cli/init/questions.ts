@@ -3,11 +3,11 @@ import path from "path"
 export interface Question{
     name: string,
     default?: string,
-    isInvalid?(value: string): boolean,
-    getQuestions?(value: string): Question[],
-    setValue?(config: any, value: string): void,
+    isInvalid?(value: string, DATA: any): boolean,
+    getQuestions?(value: string, DATA: any): Question[],
+    setValue?(config: any, value: string, DATA: any): void,
     propertyName?: string,
-    map?(data: string): any
+    map?(data: string, DATA: any): any
 }
 export const QUESTIONS: Question[] = [
     {
@@ -67,7 +67,13 @@ export const QUESTIONS: Question[] = [
                     {
                         name: "Use Scripts",
                         default: "yes",
-                        propertyName:"init.options",
+                        isInvalid(data){
+                            const low = data.toLowerCase();
+                            if(low === "yes" ||  low === "y") return false;
+                            if(low === "n" || low === "no") return false;
+                            return true;
+                        },
+                        propertyName:"init.options"
                     }
                 ];
             }

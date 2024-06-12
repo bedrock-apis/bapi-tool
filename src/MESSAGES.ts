@@ -1,7 +1,9 @@
+export const BAPI_DESCRIPTION = `This tool helps you boost your development, 
+its easy to use and it supports community scripts fetching`;
 export const COMMAND_INIT_CONFIG_EXISTS = 
 `--------------- Error ---------------
-Config soubor už existuje, 
-chce te jej přepsat?
+The config file already exists, 
+do you want to overwrite it? 
 
-Pokud ano, tak použijte -f, --force flags to force new creation
+If so, use the -f, --force flags to force a new config creation
 -------------------------------------`;
