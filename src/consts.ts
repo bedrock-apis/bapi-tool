@@ -1,6 +1,7 @@
 import path from "path";
 import process from "process";
 import { ConsoleColor } from "./utils";
+export const CONFIG_FILE_NAME = "config.json";
 export const MAIN_COLOR = ConsoleColor(240,240,240);
 export const SECONDARY_COLOR = ConsoleColor(100,100,100);
 export const PRIMARY_COLOR = ConsoleColor(80,200,130);

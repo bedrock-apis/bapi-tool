@@ -1,5 +1,6 @@
 import { VirtualFile } from "../../io";
 import * as JSON from "comment-json";
+import { CONFIG_VALIDATOR } from "./config-validator";
 
 export class ProjectConfig{
     /**
@@ -11,7 +12,7 @@ export class ProjectConfig{
      */
     public readonly sourceFile: VirtualFile<boolean>;
     /**
-     * Is config Loaded
+     * returns true if config is Loaded
      * @readonly
      */
     public get isLoaded(){return typeof this.rawObject === "object";}
@@ -19,6 +20,17 @@ export class ProjectConfig{
     public rawObject: any;
     public constructor(source: VirtualFile<boolean>){
         this.sourceFile = source;
+    }
+    public validate(){
+        return CONFIG_VALIDATOR.validate(this.rawObject, [":"]);
+    }
+    public safeValidate(){
+        try {
+            this.validate();
+            return null;
+        } catch (error: any) {
+            return error;
+        }
     }
 
     /**
@@ -57,4 +69,6 @@ export class ProjectConfig{
     setName(data: string){this.rawObject.name = data; }
     getAuthor(){return this.rawObject.author as string;}
     setAuthor(data: string){this.rawObject.author = data; }
+    getPacks(){return this.rawObject.packs as any;}
+    setPacks(data: any){this.rawObject.packs = data; }
 }

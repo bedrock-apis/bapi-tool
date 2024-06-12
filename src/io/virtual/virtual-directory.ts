@@ -51,4 +51,20 @@ export abstract class VirtualDirectory<Nullable extends boolean = true> extends 
      * Creates new directory instance with specified name
      */
     public abstract createDirectory(name: string): Promise<VirtualDirectory<false>>;
+    /**
+     * Get specific file with by relative path
+     */
+    public abstract getFileRelative(name: string, createPath: boolean): Promise<VirtualFile<boolean>>;
+    /**
+     * Get specific directory with by relative path
+     */
+    public abstract getDirectoryRelative(name: string, createPath: boolean): Promise<VirtualDirectory<boolean>>;
+    /**
+     * Get new instance even if file doesn't exists
+     */
+    public abstract openFile(name: string): VirtualFile<false>;
+    /**
+     * Get new instance even if file doesn't exists
+     */
+    public abstract openDirectory(name: string): VirtualDirectory<false>;
 }

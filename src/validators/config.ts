@@ -82,6 +82,29 @@ export default {
                             }
                         ]
                     }
+                },
+                {
+                    type:"map",
+                    optional: true,
+                    name: "watcher",
+                    valueType: {
+                        type:"compoud",
+                        properties:[
+                            {
+                                type:"string",
+                                name:"exportType",
+                                validValues:["addon","packs","library","plugin"]
+                            },
+                            {
+                                type:"string",
+                                name:"source"
+                            },
+                            {
+                                type:"string",
+                                name:"outDir"
+                            }
+                        ]
+                    }
                 }
             ]
         }

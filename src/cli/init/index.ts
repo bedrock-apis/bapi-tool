@@ -1,28 +1,61 @@
-import { ERROR_COLOR, PRIMARY_COLOR, SECONDARY_COLOR } from "../../consts";
-import { ProjectContext } from "../../project";
+import { program } from "commander";
+import { CONFIG_FILE_NAME, ERROR_COLOR, PRIMARY_COLOR, SECONDARY_COLOR } from "../../consts";
+import { VirtualDirectory } from "../../io";
+import { ProjectConfig, ProjectContext } from "../../project";
 import { console, ConsoleColor } from "../../utils";
 import { ConsoleReader } from "../../utils/Console/ConsoleReader";
-import { context } from "../base";
 import { Question, QUESTIONS } from "./questions";
+import { CURRENT_WORKING_DIRECTORY } from "../base";
+import { COMMAND_INIT_CONFIG_EXISTS } from "../../MESSAGES";
 
-context.then(context=>{
-    context.projectCommands.registryCommand("init", e=>e.description("Initialize new project").option("-f, --force", "Froces the creation.").action(async (...options)=>{
-        const [{force=false}] = options;
-        let config = context.config.rawObject;
-        if(config && !force) return console.error(ERROR_COLOR + "Project config already exists.");
-        context.config.rawObject = config = {};
-        const reader = console.CreateReader();
-        await ProccessQuestions(QUESTIONS, reader, config);
-        reader.close();
-        InitProject(context);
-        delete context.config.rawObject.init;
-        console.log(context.validateConfig());
-        context.config.save();
-    }));
-})
+program.command("init").description("Initialize new project").option("-f, --force", "Froces the creation.").action(async (...options)=>{
+    const [{force=false}] = options;
+
+
+
+    //Checks if config already exists
+    if((await CURRENT_WORKING_DIRECTORY.hasEntry(CONFIG_FILE_NAME)) && !force) return console.log(ERROR_COLOR + COMMAND_INIT_CONFIG_EXISTS);
+
+    //Open file->config->project context
+    const configFile = CURRENT_WORKING_DIRECTORY.openFile(CONFIG_FILE_NAME);
+    const config = new ProjectConfig(configFile);
+    const context = ProjectContext.CreateProject(CURRENT_WORKING_DIRECTORY, config);
+    
+    config.rawObject = {}; // Clear existing data if exists
+
+    //New CLI Reader
+    const reader = console.CreateReader();
+    await ProccessQuestions(QUESTIONS, reader, config.rawObject);
+    reader.close();
+    console.log(ConsoleColor.RESET);
+
+
+    InitProject(context);
+
+    // Clean->Validate->Save config data
+    delete config.rawObject.init;
+    config.rawObject.bapi = {
+        exports:{
+            default:{
+                exportType: "mcaddon",
+                outDire: "./releases",
+                source: "packs"
+            }
+        }
+    }
+    config.safeValidate();
+    config.save();
+});
 async function InitProject(context: ProjectContext) {
+    const config = context.config;
     const relativeDirectory = context.config.sourceFile.directory??context.workingDirectory;
-    console.warn(relativeDirectory?.relativePath);
+    let addons: {path:VirtualDirectory, type: 0|1}[] = [];
+    if( config.getPacks()){
+        const packs = config.getPacks();
+        if(packs.behaviorPack) console.log(packs.behaviorPack);
+        if(packs.resourcePack) console.log(packs.resourcePack);
+    }
+    console.log(`Created ${addons.length} addons`);
 }
 async function ProccessQuestions(questions: Question[], reader: ConsoleReader, config: any){
     for(const q of questions){

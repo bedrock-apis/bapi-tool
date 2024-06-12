@@ -1,15 +1,12 @@
-import { program } from "commander";
+import { CONFIG_FILE_NAME } from "../consts";
 import { VirtualDirectory } from "../io";
-import { ProjectConfig, CONFIG_VALIDATOR } from "./project-config";
-import { Program } from "./project-command";
-import { ValidationError } from "../utils/json-validator/validation-error";
+import { ProjectConfig } from "./project-config";
 
 export class ProjectContext{
     protected _cli?:()=>void; 
     protected _config: ProjectConfig;
     public readonly workingDirectory: VirtualDirectory;
     public get config(){return this._config};
-    public readonly projectCommands = new Program(this, program);
     /**
      * @param base working directory
      */
@@ -22,27 +19,23 @@ export class ProjectContext{
      * @param base Project's working directory
      * @returns Promise with new ProjectContext instance
      */
-    public static async OpenProject(base: VirtualDirectory, validateConfig: boolean){
+    public static CreateProject(base: VirtualDirectory, config: ProjectConfig){
         const context = new ProjectContext(base);
-        const file = (await base.hasFile("config.json"))?(await base.getFile("config.json"))!:await base.createFile("config.json");
-        if(file == null) throw new ReferenceError("Faild to get file from virtual directory called 'config.json'");
-        context._config = new ProjectConfig(file);
-        await context._config.load();
-        if(validateConfig) {
-            console.log(context.validateConfig());
-        }
+        context._config = config;
         return context;
     }
-    public static async SetCLIFor(context: ProjectContext,cli: ()=>void){
-        context._cli = cli;
+    /**
+     * Opens existing project from existing 'config.json' file
+     * @param base Project's working directory
+     * @returns Promise with new ProjectContext instance
+     */
+    public static async OpenProject(base: VirtualDirectory, configFileName?: string){
+        const context = new ProjectContext(base);
+        const file = await base.getFile(configFileName??CONFIG_FILE_NAME);
+        if(file == null) throw new ReferenceError("File not found  file_name: '" +(configFileName??CONFIG_FILE_NAME)+ "'");
+        context._config = new ProjectConfig(file);
+        await context._config.load();
+        context._config.validate();
+        return context;
     }
-    validateConfig(): ValidationError | null{
-        try {
-            CONFIG_VALIDATOR.validate(this.config.rawObject, ["ROOT"]);
-            return null;
-        } catch (error: any) {
-            return error;
-        }
-    }
-    executeCLI(){ this._cli?.(); }
 }
