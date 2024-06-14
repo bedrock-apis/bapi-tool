@@ -1,5 +1,5 @@
-import "../init";
-import "./base";
+import '../init';
+import './base';
 
 // commands
-import "./init";
+import './init';

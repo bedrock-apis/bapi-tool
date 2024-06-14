@@ -1,8 +1,8 @@
 /**
  * This class is made for JS value nested validation
  */
-export abstract class BaseValidator{
-    protected constructor(){}
+export abstract class BaseValidator {
+    protected constructor() {}
     public abstract name: string;
     /**
      * Validates recieved value

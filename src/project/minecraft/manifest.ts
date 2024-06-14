@@ -1,26 +1,25 @@
-import { randomUUID } from "crypto";
-import { ProjectContext } from "../project-context";
-import { MIN_ENGINE_VERSION_ARRAY } from "../../consts";
+import { randomUUID } from 'crypto';
+import { MIN_ENGINE_VERSION_ARRAY } from '../../consts';
 
 export interface ManifestHeader {
-    "name"?: string;
-    "description"?: string;
-    "uuid"?: string;
-    "version"?: string | [number, number, number]
-    "min_engine_version"?: [number, number, number]
+    name?: string;
+    description?: string;
+    uuid?: string;
+    version?: string | [number, number, number];
+    min_engine_version?: [number, number, number];
 }
 export interface ManifestModule {
-    "type"?: string,
-    "uuid"?: string,
-    "entry"?: string,
-    "version"?: string | [number, number, number]
+    type?: string;
+    uuid?: string;
+    entry?: string;
+    version?: string | [number, number, number];
 }
 export interface ManifestDependency {
-    "module_name"?: string;
-    "uuid"?:string;
-    "version":  string | [number, number, number];
+    module_name?: string;
+    uuid?: string;
+    version: string | [number, number, number];
 }
-export interface Manifest{
+export interface Manifest {
     format_version: number;
     header: ManifestHeader;
     modules: ManifestModule[];
@@ -28,29 +27,38 @@ export interface Manifest{
     capabilities?: string[];
 }
 export class Manifest {
-    public static HasScripting(manifest: Manifest): boolean {return manifest.modules[0]?.type==="script";}
+    public static HasScripting(manifest: Manifest): boolean {
+        return manifest.modules[0]?.type === 'script';
+    }
     public static AsDependency(manifest: Manifest): ManifestDependency {
         return {
             uuid: manifest.header.uuid,
-            version: manifest.header.version!
-        }
+            version: manifest.header.version!,
+        };
     }
-    public static CreateManifest(moduleType: string, version: string = "0.1.0-alpha"): Manifest{
+    public static CreateManifest(
+        moduleType: string,
+        version: string = '0.1.0-alpha'
+    ): Manifest {
         return {
             format_version: 2,
-            header:{
+            header: {
                 name: `pack.name`,
-                description:  `pack.description`,
+                description: `pack.description`,
                 uuid: randomUUID(),
-                min_engine_version: MIN_ENGINE_VERSION_ARRAY as [number, number, number],
-                version
+                min_engine_version: MIN_ENGINE_VERSION_ARRAY as [
+                    number,
+                    number,
+                    number,
+                ],
+                version,
             },
-            modules:[
+            modules: [
                 {
                     type: moduleType,
                     uuid: randomUUID(),
-                    version
-                }
+                    version,
+                },
             ],
             dependencies: [],
         };

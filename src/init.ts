@@ -1,4 +1,4 @@
-import { stdout } from "process";
-import { ConsoleColor } from "./utils";
+import { stdout } from 'process';
+import { ConsoleColor } from './utils';
 
-process.on("beforeExit", ()=>stdout.write(ConsoleColor.RESET));
+process.on('beforeExit', () => stdout.write(ConsoleColor.RESET));

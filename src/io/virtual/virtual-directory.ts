@@ -1,8 +1,8 @@
-import { VirtualEntryType } from "../virtual-entry-type";
-import { VirtualEntry } from "./virtual-entry";
-import { VirtualFile } from "./virtual-file";
+import { VirtualEntryType } from '../virtual-entry-type';
+import { VirtualEntry } from './virtual-entry';
+import { VirtualFile } from './virtual-file';
 
-export abstract class VirtualDirectory extends VirtualEntry<VirtualEntryType.Directory>{
+export abstract class VirtualDirectory extends VirtualEntry<VirtualEntryType.Directory> {
     /**
      * @inheritdoc
      * Directory
@@ -12,17 +12,23 @@ export abstract class VirtualDirectory extends VirtualEntry<VirtualEntryType.Dir
      * Get all files and directories from this folder
      * @param recursive if true, then returns directores and files of the inner directores as well
      */
-    public abstract getEntries(recursive?: boolean): AsyncIterableIterator<VirtualEntry<any>>;
+    public abstract getEntries(
+        recursive?: boolean
+    ): AsyncIterableIterator<VirtualEntry<any>>;
     /**
      * Get all files a from this folder
      * @param recursive if true, then returns files of the inner directores as well
      */
-    public abstract getFiles(recursive?: boolean): AsyncIterableIterator<VirtualFile>;
+    public abstract getFiles(
+        recursive?: boolean
+    ): AsyncIterableIterator<VirtualFile>;
     /**
      * Get all directories a from this folder
      * @param recursive if true, then returns directories of the inner directores as well
      */
-    public abstract getDirectories(recursive?: boolean): AsyncIterableIterator<VirtualDirectory>;
+    public abstract getDirectories(
+        recursive?: boolean
+    ): AsyncIterableIterator<VirtualDirectory>;
     /**
      * Returns true when file with this name exists
      */
@@ -49,12 +55,19 @@ export abstract class VirtualDirectory extends VirtualEntry<VirtualEntryType.Dir
      * @param filePath filePath
      * @returns Valid directory
      */
-    public createDirectory(directoryPath: string): Promise<VirtualDirectory>{ return this.getDirectory(directoryPath).create(); }
+    public createDirectory(directoryPath: string): Promise<VirtualDirectory> {
+        return this.getDirectory(directoryPath).create();
+    }
     /**
      * Makes sure that file exists, and returns its instance
      * @param filePath filePath
      * @param data Data to write, even if file already exists, its still being overwrited with specified data
      * @returns Valid directory
      */
-    public createFile(filePath: string, data?: Buffer | string): Promise<VirtualFile>{ return this.getFile(filePath).create(data); }
+    public createFile(
+        filePath: string,
+        data?: Buffer | string
+    ): Promise<VirtualFile> {
+        return this.getFile(filePath).create(data);
+    }
 }

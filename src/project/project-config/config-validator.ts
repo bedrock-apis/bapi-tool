@@ -1,5 +1,5 @@
-import { ValidatorLoader } from "../../utils/json-validator";
-import data from "../../validators/config";
+import { ValidatorLoader } from '../../utils/json-validator';
+import data from '../../validators/config';
 
 export const CONFIG_VALIDATOR = ValidatorLoader.Load(data);
 

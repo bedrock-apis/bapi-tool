@@ -1,7 +1,7 @@
-import { VirtualEntryType } from "../virtual-entry-type";
-import { VirtualEntry } from "./virtual-entry";
+import { VirtualEntryType } from '../virtual-entry-type';
+import { VirtualEntry } from './virtual-entry';
 
-export abstract class VirtualFile extends VirtualEntry<VirtualEntryType.File>{
+export abstract class VirtualFile extends VirtualEntry<VirtualEntryType.File> {
     public readonly type = VirtualEntryType.File;
     /**
      * Writes a data to this file.

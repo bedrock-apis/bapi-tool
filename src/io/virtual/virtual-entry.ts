@@ -1,11 +1,11 @@
-import { VirtualEntryType } from "../virtual-entry-type";
-import type { VirtualDirectory } from "./virtual-directory";
+import { VirtualEntryType } from '../virtual-entry-type';
+import type { VirtualDirectory } from './virtual-directory';
 
 /**
- * Virtual Entry class, this class should be inherited by VirtualFile or VirtualDirectory only, 
+ * Virtual Entry class, this class should be inherited by VirtualFile or VirtualDirectory only,
  * there are no other types then file and directory.
  */
-export abstract class VirtualEntry<T extends VirtualEntryType>{
+export abstract class VirtualEntry<T extends VirtualEntryType> {
     /**
      * File or directory
      */
@@ -26,7 +26,7 @@ export abstract class VirtualEntry<T extends VirtualEntryType>{
      * If file or directory is no longer reachable then this should return false
      */
     public abstract isValid(): Promise<boolean>;
-    
+
     /**
      * Deletes this entry (file/directory) and returns if the deletion success.
      */
@@ -36,5 +36,7 @@ export abstract class VirtualEntry<T extends VirtualEntryType>{
      * @returns Makes sure this entry exists
      */
     public abstract create(): Promise<this>;
-    public toString(){ return this.fullPath; }
+    public toString() {
+        return this.fullPath;
+    }
 }

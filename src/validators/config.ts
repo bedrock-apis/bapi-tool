@@ -4,114 +4,123 @@
  *          - name - Name of the property
  *          - optional - Is optional
  *      - whitelisted - Allows only specified properties - defualt true
- * 
+ *
  * map - Any number of properties but they have to share same value type
  *  - valueType - A Type
  *
- * array - 
+ * array -
  *   - maxSize - number default Number.MAX_INT
  *   - minSize - number default 0
  *   - valueType - A Type
- * 
+ *
  * string - string value type only
  *   - validValues - string[] Only specified values are valid values
  *   - caseCare - boolien
- * 
+ *
  * number - number value type only
  *   - max - number
  *   - min - number
- * 
+ *
  * see ../json-validator/README.md
  */
 
-
 export default {
-    type: "compoud",
+    type: 'compoud',
     properties: [
         {
-            type:"string",
-            name:"author",
+            type: 'string',
+            name: 'author',
             optional: true,
         },
         {
-            type:"string",
-            name:"name",
+            type: 'string',
+            name: 'name',
             optional: true,
         },
         {
-            type:"compoud",
-            name:"packs",
+            type: 'compoud',
+            name: 'packs',
             optional: true,
-            properties:[
+            properties: [
                 {
-                    type:"string",
+                    type: 'string',
                     optional: true,
-                    name: "behaviorPack"
+                    name: 'behaviorPack',
                 },
                 {
-                    type:"string",
+                    type: 'string',
                     optional: true,
-                    name: "resourcePack"
-                }
-            ]
+                    name: 'resourcePack',
+                },
+            ],
         },
         {
-            type:"compoud",
-            name:"bapi",
+            type: 'compoud',
+            name: 'bapi',
             optional: true,
-            properties:[
+            properties: [
                 {
-                    type:"map",
+                    type: 'map',
                     optional: true,
-                    name: "exports",
+                    name: 'exports',
                     valueType: {
-                        type:"compoud",
-                        properties:[
+                        type: 'compoud',
+                        properties: [
                             {
-                                type:"string",
-                                name:"exportType",
-                                validValues:["addon","packs","library","plugin"]
+                                type: 'string',
+                                name: 'exportType',
+                                validValues: [
+                                    'addon',
+                                    'packs',
+                                    'library',
+                                    'plugin',
+                                ],
                             },
                             {
-                                type:"string",
-                                name:"source"
+                                type: 'string',
+                                name: 'source',
                             },
                             {
-                                type:"string",
-                                name:"outDir"
-                            }
-                        ]
-                    }
+                                type: 'string',
+                                name: 'outDir',
+                            },
+                        ],
+                    },
                 },
                 {
-                    type:"map",
+                    type: 'map',
                     optional: true,
-                    name: "watcher",
+                    name: 'watcher',
                     valueType: {
-                        type:"compoud",
-                        properties:[
+                        type: 'compoud',
+                        properties: [
                             {
-                                type:"string",
-                                name:"exportType",
-                                validValues:["addon","packs","library","plugin"]
+                                type: 'string',
+                                name: 'exportType',
+                                validValues: [
+                                    'addon',
+                                    'packs',
+                                    'library',
+                                    'plugin',
+                                ],
                             },
                             {
-                                type:"string",
-                                name:"source"
+                                type: 'string',
+                                name: 'source',
                             },
                             {
-                                type:"string",
-                                name:"outDir"
-                            }
-                        ]
-                    }
+                                type: 'string',
+                                name: 'outDir',
+                            },
+                        ],
+                    },
                 },
                 {
-                    type:"string",
+                    type: 'string',
                     optional: true,
-                    name: "workspace"
-                }
-            ]
-        }
-    ]
+                    name: 'workspace',
+                },
+            ],
+        },
+    ],
 };
