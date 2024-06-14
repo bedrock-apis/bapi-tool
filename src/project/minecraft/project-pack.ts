@@ -20,9 +20,8 @@ export class ProjectPack {
             `pack.description=${context.config.getName()} by ${context.config.getAuthor()}`
         ].join("\n"))).fullPath);
         if(Manifest.HasScripting(manifest)) {
-            const file = rootDirectory.getFile(manifest.modules[0].entry!);
+            const file = await rootDirectory.createFile(manifest.modules[0].entry!, 'console.warn("Hello World");');
             log(file.fullPath);
-            await file.writeFile('console.warn("Hello World");');
         }
         log((await rootDirectory.createFile(MANIFEST_FILE_NAME, JSON.stringify(manifest, null, "  "))).fullPath);
         log((await rootDirectory.createFile(PACK_ICON_FILE_NAME, Buffer.from(PACK_ICON_PNG, "base64"))).fullPath);
