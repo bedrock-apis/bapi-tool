@@ -54,7 +54,7 @@ export class PhysicalDirectory<Nullable extends boolean = true> extends VirtualD
         this.directory = base;
         this.name = name;
     }
-    public async * getEntries(recursive?: boolean): AsyncIterable<PhysicalDirectory<false> | PhysicalFile<false>> {
+    public async * getEntries(recursive?: boolean): AsyncIterableIterator<PhysicalDirectory<false> | PhysicalFile<false>> {
         for(const info of await PFS.readdir(this.relativePath, {withFileTypes: true})){
             if(info.isFile()) yield new PhysicalFile(info.name, this);
             else if(info.isDirectory()) {
@@ -64,7 +64,7 @@ export class PhysicalDirectory<Nullable extends boolean = true> extends VirtualD
             }
         }
     }
-    public async * getFiles(recursive?: boolean): AsyncIterable<PhysicalFile<false>> {
+    public async * getFiles(recursive?: boolean): AsyncIterableIterator<PhysicalFile<false>> {
         for(const info of await PFS.readdir(this.relativePath, {withFileTypes: true})){
             if(info.isFile()) yield new PhysicalFile(info.name, this);
             else if(info.isDirectory()) {
@@ -73,7 +73,7 @@ export class PhysicalDirectory<Nullable extends boolean = true> extends VirtualD
             }
         }
     }
-    public async * getDirectories(recursive?: boolean): AsyncIterable<PhysicalDirectory<false>> {
+    public async * getDirectories(recursive?: boolean): AsyncIterableIterator<PhysicalDirectory<false>> {
         for(const info of await PFS.readdir(this.relativePath, {withFileTypes: true})){
             if(info.isDirectory()) {
                 const dir = new PhysicalDirectory(info.name, this);
@@ -104,9 +104,9 @@ export class PhysicalDirectory<Nullable extends boolean = true> extends VirtualD
         await Promise.all(tasks);
         return PFS.rmdir(this.relativePath).then(e=>true, e=>false);
     }
-    public async createFile(name: string): Promise<PhysicalFile<false>> {
+    public async createFile(name: string, data?: string | Buffer): Promise<PhysicalFile<false>> {
         if(await this.hasFile(name)) return (await this.getFile(name))!;
-        await PFS.writeFile(this.relativePath + "/" + name, "");
+        await PFS.writeFile(this.relativePath + "/" + name, data??"");
         return new PhysicalFile<false>(name, this);
     }
     public async createDirectory(name: string): Promise<VirtualDirectory<false>> {

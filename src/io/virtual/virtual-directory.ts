@@ -12,17 +12,17 @@ export abstract class VirtualDirectory<Nullable extends boolean = true> extends 
      * Get all files and directories from this folder
      * @param recursive if true, then returns directores and files of the inner directores as well
      */
-    public abstract getEntries(recursive?: boolean): AsyncIterable<VirtualEntry<any, false>>;
+    public abstract getEntries(recursive?: boolean): AsyncIterableIterator<VirtualEntry<any, false>>;
     /**
      * Get all files a from this folder
      * @param recursive if true, then returns files of the inner directores as well
      */
-    public abstract getFiles(recursive?: boolean): AsyncIterable<VirtualFile<false>>;
+    public abstract getFiles(recursive?: boolean): AsyncIterableIterator<VirtualFile<false>>;
     /**
      * Get all directories a from this folder
      * @param recursive if true, then returns directories of the inner directores as well
      */
-    public abstract getDirectories(recursive?: boolean): AsyncIterable<VirtualDirectory<false>>;
+    public abstract getDirectories(recursive?: boolean): AsyncIterableIterator<VirtualDirectory<false>>;
     /**
      * Returns true when file with this name exists
      */
@@ -46,7 +46,7 @@ export abstract class VirtualDirectory<Nullable extends boolean = true> extends 
     /**
      * Creates new file instance with specified name
      */
-    public abstract createFile(name: string): Promise<VirtualFile<false>>;
+    public abstract createFile(name: string, data?: Buffer | string): Promise<VirtualFile<false>>;
     /**
      * Creates new directory instance with specified name
      */

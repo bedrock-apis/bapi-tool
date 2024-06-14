@@ -1,6 +1,8 @@
-import { VirtualFile } from "../../io";
+import { VirtualDirectory, VirtualFile } from "../../io";
 import * as JSON from "comment-json";
 import { CONFIG_VALIDATOR } from "./config-validator";
+import { ProjectPack } from "../minecraft/project-pack";
+import { MANIFEST_FILE_NAME } from "../../consts";
 
 export class ProjectConfig{
     /**
@@ -71,4 +73,39 @@ export class ProjectConfig{
     setAuthor(data: string){this.rawObject.author = data; }
     getPacks(){return this.rawObject.packs as any;}
     setPacks(data: any){this.rawObject.packs = data; }
+    getWorkspace(){ return this.rawObject.bapi.workspace; }
+    setWorkspace(data: string){ this.rawObject.bapi.workspace = data; }
+    async * getPackDirectories(): AsyncIterableIterator<VirtualDirectory<boolean>>{
+        let dir = this.sourceFile.directory;
+        if(dir == null) throw new ReferenceError("Could not load config directory: " + dir);
+        if(typeof this.getWorkspace() === "string"){
+            let theDir = await dir?.getDirectoryRelative(this.getWorkspace(), false);
+            if(theDir == undefined) return;
+            for await(const dir of theDir.getDirectories()) yield dir;
+        }
+        else if(this.getPacks()){
+            const {
+                behaviorPack,
+                resourcePack
+            } = this.getPacks();
+            let p = [];
+            if(behaviorPack) p.push(behaviorPack);
+            if(resourcePack) p.push(resourcePack);
+            for(const path of p){
+                let theDir = await dir?.getDirectoryRelative(path, false);
+                if(theDir == undefined) break;
+                yield theDir;
+            }
+        }
+        else throw new ReferenceError("No source folders specified");
+    }
+    async * getProjectPack(): AsyncIterableIterator<ProjectPack>{
+        for await(const dir of this.getPackDirectories()){
+            const manifestFile = await dir.getFile(MANIFEST_FILE_NAME);
+            if(manifestFile != null){
+                const p = await ProjectPack.OpenEmpty(dir);
+                yield p.setManifestData(JSON.parse((await manifestFile.readFile()).toString()));
+            }
+        }
+    }
 }

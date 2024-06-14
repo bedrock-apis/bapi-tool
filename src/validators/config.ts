@@ -105,6 +105,11 @@ export default {
                             }
                         ]
                     }
+                },
+                {
+                    type:"string",
+                    optional: true,
+                    name: "workspace"
                 }
             ]
         }

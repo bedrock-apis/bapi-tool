@@ -31,4 +31,6 @@ export abstract class VirtualEntry<T extends VirtualEntryType, Nullable extends 
      * Deletes this entry (file/directory) and returns if the deletion success.
      */
     public abstract delete(): Promise<boolean>;
+
+    public toString(){ return this.relativePath; }
 }

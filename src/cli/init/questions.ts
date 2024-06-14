@@ -56,12 +56,12 @@ export const QUESTIONS: Question[] = [
                 return [
                     {
                         name: "Behavior Pack",
-                        default: "./packs/BP",
+                        default: "./BP",
                         propertyName:"packs.behaviorPack",
                     },
                     {
                         name: "Resource Pack",
-                        default: "./packs/RP",
+                        default: "./RP",
                         propertyName:"packs.resourcePack",
                     },
                     {
@@ -73,7 +73,7 @@ export const QUESTIONS: Question[] = [
                             if(low === "n" || low === "no") return false;
                             return true;
                         },
-                        propertyName:"init.options"
+                        propertyName:"init.options.use_script"
                     }
                 ];
             }
