@@ -1,46 +1,105 @@
-import * as PATH from "path";
-import FS, {promises as PFS} from "fs";
-import { VirtualEntryType, VirtualDirectory, VirtualEntry, VirtualFile } from "../virtual";
-import { PhysicalFile } from "./physical-file";
+import FS, { existsSync, promises as PFS } from 'fs';
+import { VirtualDirectory, VirtualEntry, VirtualFile } from '../virtual';
+import { PhysicalFile } from './physical-file';
+import * as PATH from 'node:path';
 
-export class PhysicalDirectory extends VirtualDirectory{
-    public directory: PhysicalDirectory = null;
-    public name: string;
-    public get relativePath(){
-        if(this.directory) return this.directory.relativePath + "/" + this.name;
-        else return this.name;
-    }
-    public get fullPath(){return PATH.resolve(this.relativePath);}
-    public constructor(name: string, base?: PhysicalDirectory){
+const directories = new Map<string, PhysicalDirectory>();
+
+export class PhysicalDirectory extends VirtualDirectory {
+    public readonly name!: string;
+    public readonly fullPath!: string;
+    public constructor(filePath: string) {
+        const f = PATH.resolve(filePath);
+        if (directories.has(f)) return directories.get(f)!;
         super();
-        this.directory = base??null;
-        this.name = name;
+        this.fullPath = f;
+        this.name = PATH.basename(this.fullPath);
+        directories.set(f, this);
     }
-    public *getEntries(recursive?: boolean): Iterable<PhysicalDirectory | PhysicalFile> {
-        for(const info of FS.readdirSync(this.relativePath, {withFileTypes: true})){
-            if(info.isFile()) yield new PhysicalFile(this, info.name);
-            else if(info.isDirectory()) {
-                const dir = new PhysicalDirectory(info.name, this);
-                yield dir;
-                if(recursive) yield * dir.getEntries(recursive);
+
+    public async *getEntries(
+        recursive?: boolean
+    ): AsyncIterableIterator<VirtualEntry<any>> {
+        for (const info of await PFS.readdir(this.fullPath, {
+            withFileTypes: true,
+        })) {
+            if (info.isFile()) yield new PhysicalFile(info.path);
+            else if (info.isDirectory()) {
+                const dir = new PhysicalDirectory(info.path);
+                yield dir as any;
+                if (recursive) yield* dir.getEntries(recursive);
             }
         }
     }
-    public *getFiles(recursive?: boolean): Iterable<PhysicalFile> { for(const file of this.getEntries(recursive)) if(file.type === VirtualEntryType.File) yield file; }
-    public *getDirectories(recursive?: boolean): Iterable<PhysicalDirectory> {  for(const dir of this.getEntries(recursive)) if(dir.type === VirtualEntryType.Directory) yield dir; }
-    public openFile(name: string): VirtualFile { return new PhysicalFile(this, name); }
-    public openDirectory(name: string): PhysicalDirectory { return new PhysicalDirectory(name, this); }
-    public entryExist(name: string): Promise<boolean> { return Promise.resolve(FS.existsSync(this.relativePath + "/" + name)); }
-    public getExist(): Promise<boolean> { return Promise.resolve(FS.existsSync(this.relativePath)); }
-    public __readFileAsync(name: string): Promise<Buffer> { return PFS.readFile(this.relativePath + "/" + name); }
-    public async __writeFileAsync(name: string, data: Buffer | string): Promise<Error | void> {
-        let success: Error | void;
-        await PFS.writeFile(this.relativePath + "/" + name, data).catch(e=>success = e);
-        return success;
+    public async *getFiles(
+        recursive?: boolean
+    ): AsyncIterableIterator<VirtualFile> {
+        for (const info of await PFS.readdir(this.fullPath, {
+            withFileTypes: true,
+        }))
+            if (info.isFile()) yield new PhysicalFile(info.path);
+            else if (info.isDirectory()) {
+                const dir = new PhysicalDirectory(info.path);
+                yield dir as any;
+                if (recursive) yield* dir.getFiles(recursive);
+            }
     }
-    public async __deleteFileAsync(name: string): Promise<boolean> {
-        let success = true;
-        await PFS.rm(this.relativePath + "/" + name).catch(e=>success = false);
-        return success;
+    public async *getDirectories(
+        recursive?: boolean
+    ): AsyncIterableIterator<VirtualDirectory> {
+        for (const info of await PFS.readdir(this.fullPath, {
+            withFileTypes: true,
+        }))
+            if (info.isDirectory()) {
+                const dir = new PhysicalDirectory(info.path);
+                yield dir as any;
+                if (recursive) yield* dir.getDirectories(recursive);
+            }
+    }
+
+    public async hasEntry(relativePath: string): Promise<boolean> {
+        return FS.existsSync(PATH.resolve(this.fullPath, relativePath));
+    }
+    public async hasFile(relativePath: string): Promise<boolean> {
+        return PFS.stat(PATH.resolve(this.fullPath, relativePath))
+            .then((e) => e.isFile())
+            .catch((e) => false);
+    }
+    public async hasDirectory(relativePath: string): Promise<boolean> {
+        return PFS.stat(PATH.resolve(this.fullPath, relativePath))
+            .then((e) => e.isDirectory())
+            .catch((e) => false);
+    }
+
+    public getFile(relativePath: string): PhysicalFile {
+        return new PhysicalFile(PATH.resolve(this.fullPath, relativePath));
+    }
+    public getDirectory(relativePath: string): PhysicalDirectory {
+        return new PhysicalDirectory(PATH.resolve(this.fullPath, relativePath));
+    }
+
+    public getBaseDirectory(): PhysicalDirectory {
+        return new PhysicalDirectory(PATH.resolve(this.fullPath, '..'));
+    }
+    public isValid(): Promise<boolean> {
+        return this.hasDirectory('.');
+    }
+    public async delete(removeAll: boolean = false): Promise<boolean> {
+        if (!this.isValid()) return false;
+        const tasks = [];
+        for await (const entry of this.getEntries())
+            tasks.push((entry.delete as any).call(entry, removeAll));
+        await Promise.all(tasks);
+        return PFS.rmdir(this.fullPath).then(
+            (e) => true,
+            (e) => false
+        );
+    }
+    public async create() {
+        if (await this.isValid()) return this;
+        if (!(await this.getBaseDirectory().isValid()))
+            await this.getBaseDirectory().create();
+        await PFS.mkdir(this.fullPath);
+        return this;
     }
 }

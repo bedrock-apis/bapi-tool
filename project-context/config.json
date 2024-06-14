@@ -1,0 +1,22 @@
+{
+   "name": "project-context",
+   "author": "ConMaster",
+   "version": "0.1.0",
+   "packs": {
+      "behaviorPack": "./BP",
+      "resourcePack": "./RP"
+   },
+   "bapi": {
+      "workspace": "packs",
+      "exports": {
+         "default": {
+            "exportType": "mcaddon",
+            "outDire": "./releases",
+            "source": "packs"
+         }
+      },
+      "watchers": {
+         "default": {}
+      }
+   }
+}
