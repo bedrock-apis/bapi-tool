@@ -10,26 +10,26 @@ export class ProjectPack {
      */
     public readonly rootDir;
     public manifestData?: Manifest;
-    public static async Initialize(rootDirectory: VirtualDirectory<boolean>, context: ProjectContext, manifest: Manifest, log?:(path: string)=>void){
+    public static async Initialize(rootDirectory: VirtualDirectory, context: ProjectContext, manifest: Manifest, log?:(path: string)=>void){
         log ??= ()=>{};
         const texts = await rootDirectory.createDirectory("texts");
-        log(texts.relativePath);
-        log((await texts.createFile("languages.json", JSON.stringify(["en_US"],null,"  "))).relativePath);
+        log(texts.fullPath);
+        log((await texts.createFile("languages.json", JSON.stringify(["en_US"],null,"  "))).fullPath);
         log((await texts.createFile("en_US.lang", [
             `pack.name=${context.config.getName()}`,
             `pack.description=${context.config.getName()} by ${context.config.getAuthor()}`
-        ].join("\n"))).relativePath);
+        ].join("\n"))).fullPath);
         if(Manifest.HasScripting(manifest)) {
-            const file = await rootDirectory.getFileRelative(manifest.modules[0].entry!, true);
-            log(file.relativePath);
+            const file = rootDirectory.getFile(manifest.modules[0].entry!);
+            log(file.fullPath);
             await file.writeFile('console.warn("Hello World");');
         }
-        log((await rootDirectory.createFile(MANIFEST_FILE_NAME, JSON.stringify(manifest, null, "  "))).relativePath);
-        log((await rootDirectory.createFile(PACK_ICON_FILE_NAME, Buffer.from(PACK_ICON_PNG, "base64"))).relativePath);
+        log((await rootDirectory.createFile(MANIFEST_FILE_NAME, JSON.stringify(manifest, null, "  "))).fullPath);
+        log((await rootDirectory.createFile(PACK_ICON_FILE_NAME, Buffer.from(PACK_ICON_PNG, "base64"))).fullPath);
     }
-    public static async OpenPack(rootDirectory: VirtualDirectory<boolean>){
+    public static async OpenPack(rootDirectory: VirtualDirectory){
         if(!await rootDirectory.hasFile(MANIFEST_FILE_NAME)) throw new ReferenceError("Manifest not found in " + rootDirectory);
-        const data = await rootDirectory.getFile(MANIFEST_FILE_NAME).then(e=>e?.readFile());
+        const data = await rootDirectory.getFile(MANIFEST_FILE_NAME).tryReadFile();
         if(data == null) throw new Error("Faild to read manifest file in " + rootDirectory);
         const raw = parse(data.toString()) as unknown as Manifest;
         if(raw.format_version !== 2) throw new SyntaxError("Unsuported manifest format: " + raw.format_version);
@@ -44,8 +44,8 @@ export class ProjectPack {
      * @param rootDir Root dir fot new ProjectPacks
      * @returns returns new empty project pack
      */
-    public static async OpenEmpty(rootDir: VirtualDirectory<boolean>){ return new ProjectPack(rootDir); }
-    protected constructor(rootDirectory: VirtualDirectory<boolean>){ this.rootDir = rootDirectory; }
+    public static async OpenEmpty(rootDir: VirtualDirectory){ return new ProjectPack(rootDir); }
+    protected constructor(rootDirectory: VirtualDirectory){ this.rootDir = rootDirectory; }
 
     /**
      * True when folder exists with manifest.json in it
@@ -53,8 +53,7 @@ export class ProjectPack {
      */
     public async isValid(){return (await this.rootDir.isValid()) && (await this.rootDir.hasFile("manifest.json"));}
     public async saveManifest(){
-        const file = await this.rootDir.createFile(MANIFEST_FILE_NAME);
-        await file.writeFile(stringify(this.manifestData, null, "  "));
+        await this.rootDir.getFile(MANIFEST_FILE_NAME).create(stringify(this.manifestData, null, "  "));
     }
     public setManifestData(data: any){
         if(data.format_version !== 2) throw new SyntaxError("Unsuported manifest format: " + data.format_version);

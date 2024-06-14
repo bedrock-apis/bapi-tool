@@ -3,7 +3,7 @@
   "header": {
     "name": "pack.name",
     "description": "pack.description",
-    "uuid": "285d7b5c-45be-44de-a8b8-c142997408c8",
+    "uuid": "d9dc6390-d5b6-42ad-8727-8b2eae03ad72",
     "min_engine_version": [
       1,
       21,
@@ -14,7 +14,7 @@
   "modules": [
     {
       "type": "script",
-      "uuid": "04c127c1-3500-4b2e-a032-f5752e58b814",
+      "uuid": "0b75b860-897b-44e7-b072-ed91ed3c84d4",
       "version": "0.1.0",
       "entry": "scripts/index.js"
     }
@@ -29,7 +29,7 @@
       "version": "1.2.0"
     },
     {
-      "uuid": "36864a39-0172-41dc-b5da-8a4d39221e6d",
+      "uuid": "a54583de-6570-48e4-8c61-87facf15b658",
       "version": "0.1.0"
     }
   ]

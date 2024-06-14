@@ -5,7 +5,7 @@ import type { VirtualDirectory } from "./virtual-directory";
  * Virtual Entry class, this class should be inherited by VirtualFile or VirtualDirectory only, 
  * there are no other types then file and directory.
  */
-export abstract class VirtualEntry<T extends VirtualEntryType, Nullable extends boolean = true>{
+export abstract class VirtualEntry<T extends VirtualEntryType>{
     /**
      * File or directory
      */
@@ -13,7 +13,7 @@ export abstract class VirtualEntry<T extends VirtualEntryType, Nullable extends 
     /**
      * Base directory, may be a null.
      */
-    public abstract readonly directory: Nullable extends true ? VirtualDirectory | null : VirtualDirectory;
+    public abstract getBaseDirectory(): VirtualDirectory;
     /**
      * Name only without relative path.
      */
@@ -21,7 +21,7 @@ export abstract class VirtualEntry<T extends VirtualEntryType, Nullable extends 
     /**
      * Relative Path
      */
-    public abstract readonly relativePath: string;
+    public abstract readonly fullPath: string;
     /**
      * If file or directory is no longer reachable then this should return false
      */
@@ -32,5 +32,9 @@ export abstract class VirtualEntry<T extends VirtualEntryType, Nullable extends 
      */
     public abstract delete(): Promise<boolean>;
 
-    public toString(){ return this.relativePath; }
+    /**
+     * @returns Makes sure this entry exists
+     */
+    public abstract create(): Promise<this>;
+    public toString(){ return this.fullPath; }
 }

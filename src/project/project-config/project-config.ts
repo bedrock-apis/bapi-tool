@@ -12,7 +12,7 @@ export class ProjectConfig{
      * Return and virtual source
      * @readonly
      */
-    public readonly sourceFile: VirtualFile<boolean>;
+    public readonly sourceFile: VirtualFile;
     /**
      * returns true if config is Loaded
      * @readonly
@@ -20,7 +20,7 @@ export class ProjectConfig{
     public get isLoaded(){return typeof this.rawObject === "object";}
 
     public rawObject: any;
-    public constructor(source: VirtualFile<boolean>){
+    public constructor(source: VirtualFile){
         this.sourceFile = source;
     }
     public validate(){
@@ -75,12 +75,12 @@ export class ProjectConfig{
     setPacks(data: any){this.rawObject.packs = data; }
     getWorkspace(){ return this.rawObject.bapi.workspace; }
     setWorkspace(data: string){ this.rawObject.bapi.workspace = data; }
-    async * getPackDirectories(): AsyncIterableIterator<VirtualDirectory<boolean>>{
-        let dir = this.sourceFile.directory;
-        if(dir == null) throw new ReferenceError("Could not load config directory: " + dir);
+    async * getPackDirectories(): AsyncIterableIterator<VirtualDirectory>{
+        let dir = this.sourceFile.getBaseDirectory();
+        if(!await dir.isValid()) throw new ReferenceError("Could not load config directory: " + dir);
         if(typeof this.getWorkspace() === "string"){
-            let theDir = await dir?.getDirectoryRelative(this.getWorkspace(), false);
-            if(theDir == undefined) return;
+            let theDir = dir.getDirectory(this.getWorkspace());
+            if(!await theDir.isValid()) return;
             for await(const dir of theDir.getDirectories()) yield dir;
         }
         else if(this.getPacks()){
@@ -92,8 +92,8 @@ export class ProjectConfig{
             if(behaviorPack) p.push(behaviorPack);
             if(resourcePack) p.push(resourcePack);
             for(const path of p){
-                let theDir = await dir?.getDirectoryRelative(path, false);
-                if(theDir == undefined) break;
+                let theDir = dir.getDirectory(path);
+                if(!await theDir.isValid()) break;
                 yield theDir;
             }
         }

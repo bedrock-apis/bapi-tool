@@ -21,7 +21,7 @@ program.command("init").description("Initialize new project").option("-f, --forc
     if((await CURRENT_WORKING_DIRECTORY.hasEntry(CONFIG_FILE_NAME)) && !force) return console.log(ERROR_COLOR + COMMAND_INIT_CONFIG_EXISTS);
 
     //Open file->config->project context
-    const configFile = CURRENT_WORKING_DIRECTORY.openFile(CONFIG_FILE_NAME);
+    const configFile = CURRENT_WORKING_DIRECTORY.getFile(CONFIG_FILE_NAME);
     const config = new ProjectConfig(configFile);
     const context = ProjectContext.CreateProject(CURRENT_WORKING_DIRECTORY, config);
     
@@ -59,7 +59,7 @@ program.command("init").description("Initialize new project").option("-f, --forc
 });
 async function InitProject(context: ProjectContext) {
     const config = context.config;
-    const relativeDirectory = context.config.sourceFile.directory??context.workingDirectory;
+    const relativeDirectory = context.config.sourceFile.getBaseDirectory()??context.workingDirectory;
     if(config.getPacks()){
         const packs = config.getPacks();
         const dependency1 = {};
@@ -82,7 +82,7 @@ async function InitProject(context: ProjectContext) {
                 dependency2 as ManifestDependency
             ]
             manifest.modules[0].entry = "scripts/index.js";
-            const data = await relativeDirectory.getDirectoryRelative(packs.behaviorPack, true);
+            const data = await relativeDirectory.createDirectory(packs.behaviorPack);
             task1 = ProjectPack.Initialize(
                 data, 
                 context,
@@ -95,7 +95,7 @@ async function InitProject(context: ProjectContext) {
             Object.assign(dependency2, Manifest.AsDependency(manifest));
             manifest.dependencies.push(dependency1 as ManifestDependency);
             await task1;
-            const data = await relativeDirectory.getDirectoryRelative(packs.resourcePack, true);
+            const data = await relativeDirectory.createDirectory(packs.resourcePack);
             await ProjectPack.Initialize(
                 data, 
                 context, 
