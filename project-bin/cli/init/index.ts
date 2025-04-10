@@ -1,9 +1,6 @@
 import { program } from 'commander';
 import {
-    CONFIG_FILE_NAME,
-    ERROR_COLOR,
-    PRIMARY_COLOR,
-    SECONDARY_COLOR,
+    CONFIG_FILE_NAME
 } from '../../consts';
 import {
     Manifest,
@@ -11,8 +8,6 @@ import {
     ProjectConfig,
     ProjectContext,
 } from '../../project';
-import { console, ConsoleColor } from '../../utils';
-import { ConsoleReader } from '../../utils/Console/ConsoleReader';
 import { Question, QUESTIONS } from './questions';
 import { CURRENT_WORKING_DIRECTORY } from '../base';
 import { COMMAND_INIT_CONFIG_EXISTS } from '../../MESSAGES';

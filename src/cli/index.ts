@@ -1,5 +1,10 @@
-import '../init';
-import './base';
+import picocolors from "picocolors";
 
-// commands
-import './init';
+console.log(picocolors.green("Hello world") + ": This is the bapi tool.");
+
+export const a: boolean = true;
+export class bob {
+    public method(){
+
+    }
+}

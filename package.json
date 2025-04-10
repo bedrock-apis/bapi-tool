@@ -25,13 +25,15 @@
     "@types/node": "^20.11.30",
     "oxlint": "^0.16.5",
     "prettier": "3.3.2",
-    "rolldown": "1.0.0-beta.7"
+    "rolldown": "1.0.0-beta.7-commit.e117288"
   },
   "dependencies": {
     "chokidar": "^3.6.0",
     "commander": "^12.0.0",
     "comment-json": "^4.2.3",
-    "jszip": "^3.10.1"
+    "jsonverify": "^1.0.1",
+    "jszip": "^3.10.1",
+    "picocolors": "^1.1.1"
   },
   "prettier": {
     "trailingComma": "es5",

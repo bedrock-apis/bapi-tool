@@ -1,9 +1,9 @@
 /**
  * compoud - And restricted object type with specific properties
- *      - properties - Array of properties - defualt empty array
+ *      - properties - Array of properties - default empty array
  *          - name - Name of the property
  *          - optional - Is optional
- *      - whitelisted - Allows only specified properties - defualt true
+ *      - whitelisted - Allows only specified properties - default true
  *
  * map - Any number of properties but they have to share same value type
  *  - valueType - A Type
@@ -15,7 +15,7 @@
  *
  * string - string value type only
  *   - validValues - string[] Only specified values are valid values
- *   - caseCare - boolien
+ *   - caseCare - boolean
  *
  * number - number value type only
  *   - max - number

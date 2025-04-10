@@ -1,5 +1,3 @@
-import { GITHUB_NOT_FOUND_MESSAGE } from '../consts';
-
 export async function DownloadContent(url: string, headers = {}) {
     return Buffer.from(
         await (await fetch(url, { headers, method: 'GET' })).arrayBuffer()
