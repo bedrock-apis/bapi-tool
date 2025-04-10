@@ -1,5 +1,5 @@
 import { stdin } from 'process';
-import { createInterface } from 'readline/promises';
+import { createInterface } from 'node:readline/promises';
 import { ConsoleReader } from './ConsoleReader';
 
 export class Console {

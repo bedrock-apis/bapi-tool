@@ -8,5 +8,5 @@
  - Improve export command
  - Implement info fetching
  - Implement watch command
- - Implement pakcages bundler
+ - Implement packages bundler
  - Implement clean command

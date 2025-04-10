@@ -2,15 +2,12 @@ import { program } from 'commander';
 import {
     CONFIG_FILE_NAME,
     ERROR_COLOR,
-    MIN_ENGINE_VERSION_ARRAY,
     PRIMARY_COLOR,
     SECONDARY_COLOR,
 } from '../../consts';
-import { VirtualDirectory } from '../../io';
 import {
     Manifest,
     ManifestDependency,
-    ManifestHeader,
     ProjectConfig,
     ProjectContext,
 } from '../../project';
@@ -19,8 +16,6 @@ import { ConsoleReader } from '../../utils/Console/ConsoleReader';
 import { Question, QUESTIONS } from './questions';
 import { CURRENT_WORKING_DIRECTORY } from '../base';
 import { COMMAND_INIT_CONFIG_EXISTS } from '../../MESSAGES';
-import { GetGithubContent } from '../../utils/functions';
-import { randomUUID } from 'node:crypto';
 import { ProjectPack } from '../../project/minecraft/project-pack';
 
 program

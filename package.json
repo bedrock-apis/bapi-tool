@@ -4,9 +4,8 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "init": "npm i & npm run build & npm run link",
-    "build": "npm run format & tsc",
-    "link": "npm link -l",
+    "build": "pnpm rolldown -c",
+    "link": "pnpm link -l",
     "format": "npx prettier src --write"
   },
   "repository": {
@@ -24,22 +23,23 @@
   "homepage": "https://github.com/bedrock-apis/bapi-tool#readme",
   "devDependencies": {
     "@types/node": "^20.11.30",
-    "prettier": "3.3.2"
+    "oxlint": "^0.16.5",
+    "prettier": "3.3.2",
+    "rolldown": "1.0.0-beta.7"
   },
   "dependencies": {
-    "@babel/generator": "^7.24.4",
-    "@babel/parser": "^7.24.4",
     "chokidar": "^3.6.0",
     "commander": "^12.0.0",
     "comment-json": "^4.2.3",
     "jszip": "^3.10.1"
   },
-  "prettier":{
+  "prettier": {
     "trailingComma": "es5",
     "tabWidth": 4,
     "semi": true,
     "quoteProps": "consistent",
     "singleQuote": true,
     "endOfLine": "lf"
-  }
+  },
+  "packageManager": "pnpm@10.8.0+sha512.0e82714d1b5b43c74610193cb20734897c1d00de89d0e18420aebc5977fa13d780a9cb05734624e81ebd81cc876cd464794850641c48b9544326b5622ca29971"
 }

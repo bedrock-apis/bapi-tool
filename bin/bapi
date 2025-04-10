@@ -1,2 +1,1154 @@
 #!/usr/bin/env node
-require("../dist/cli");
+
+import process$1, { stdout } from "process";
+import { createInterface } from "node:readline/promises";
+import { program } from "commander";
+import FS, { existsSync, promises } from "fs";
+import * as PATH$1 from "node:path";
+import * as PATH from "node:path";
+import path from "path";
+import * as JSON$1 from "comment-json";
+import { parse, stringify } from "comment-json";
+import { randomUUID } from "crypto";
+
+//#region src/utils/Console/ConsoleReader.ts
+var ConsoleReader = class {
+	input;
+	constructor(input) {
+		this.input = input;
+	}
+	close() {
+		this.input.close();
+	}
+	ReadLineAsync(question) {
+		return this.input.question(question ?? "");
+	}
+};
+
+//#endregion
+//#region src/utils/Console/Console.ts
+var Console = class {
+	CreateReader() {
+		return new ConsoleReader(createInterface({
+			input: process.stdin,
+			output: process.stdout
+		}));
+	}
+	_write(text) {
+		return new Promise((res) => process.stdout.write(text, (e) => res(Boolean(e))));
+	}
+	WriteLine(...params) {
+		return this._write(params.join() + "\r\n");
+	}
+	Write(...params) {
+		return this._write(params.join());
+	}
+	async Type(text, speed = .5) {
+		speed = 1 / speed;
+		const n = speed > 1 ? 1 : 1 / speed;
+		const d = speed > 1 ? speed : 1;
+		let index = 0;
+		let count = 0;
+		while (index < text.length) {
+			let code = "";
+			count -= n;
+			while (count < 0 && index < text.length) {
+				code += text[index++];
+				count++;
+			}
+			await this._write(code);
+			await new Promise((res) => setTimeout(res, d));
+		}
+	}
+	async TypeLine(text, speed) {
+		await this.Type(text, speed);
+		await this._write("\r\n");
+	}
+};
+Object.setPrototypeOf(Console.prototype, globalThis.console);
+const console$1 = new Console();
+
+//#endregion
+//#region src/utils/Console/TextFormatter.ts
+var TextFormatter = class {
+	static RESET = `\x1b[0m`;
+	static RESET_BACKGROUND = `\x1b[49m`;
+	static RESET_FOREGROUND = `\x1b[39m`;
+	static GetColorCode(r, g, b, background) {
+		return `\x1b[${background ? 4 : 3}8;2;${r};${g};${b}m`;
+	}
+};
+
+//#endregion
+//#region src/utils/Console/ConsoleColor.ts
+const ConsoleColor = function ConsoleColor$1(r, g, b, background) {
+	if (new.target) {
+		this.r = r;
+		this.g = g;
+		this.b = b;
+		this.background = background ?? false;
+	} else return new ConsoleColor$1(r, g, b);
+};
+Object.assign(ConsoleColor, {
+	RESET: TextFormatter.RESET,
+	RESET_BACKGROUND: TextFormatter.RESET_BACKGROUND,
+	RESET_FOREGROUND: TextFormatter.RESET_FOREGROUND,
+	from(color, background) {
+		if (typeof color === "string" && color.startsWith("#")) color = parseInt(color.substring(1), 16);
+		else if (typeof color === "bigint") color = Number(color);
+		if (typeof color === "number") {
+			color = Math.ceil(color);
+			const b = color & 255;
+			const g = color >> 8 & 255;
+			const r = color >> 16 & 255;
+			color = {
+				r,
+				g,
+				b
+			};
+		}
+		if (typeof color === "object") {
+			const { r, g, b } = color;
+			return new ConsoleColor(Number(r), Number(g), Number(b), background);
+		} else throw TypeError("Unknow color value: " + color);
+	}
+});
+ConsoleColor.prototype = {
+	getCode() {
+		return this.toString();
+	},
+	toString() {
+		return TextFormatter.GetColorCode(this.r, this.g, this.b, this.background);
+	}
+};
+
+//#endregion
+//#region src/init.ts
+process.on("beforeExit", () => stdout.write(ConsoleColor.RESET));
+
+//#endregion
+//#region src/io/virtual/virtual-entry.ts
+var VirtualEntry = class {
+	toString() {
+		return this.fullPath;
+	}
+};
+
+//#endregion
+//#region src/io/virtual-entry-type.ts
+let VirtualEntryType = /* @__PURE__ */ function(VirtualEntryType$1) {
+	VirtualEntryType$1["Directory"] = "Directory";
+	VirtualEntryType$1["File"] = "File";
+	return VirtualEntryType$1;
+}({});
+
+//#endregion
+//#region src/io/virtual/virtual-directory.ts
+var VirtualDirectory = class extends VirtualEntry {
+	/**
+	
+	* @inheritdoc
+	
+	* Directory
+	
+	*/
+	type = VirtualEntryType.Directory;
+	/**
+	
+	* Makes sure that directory exists, and returns its instance
+	
+	* @param filePath filePath
+	
+	* @returns Valid directory
+	
+	*/
+	createDirectory(directoryPath) {
+		return this.getDirectory(directoryPath).create();
+	}
+	/**
+	
+	* Makes sure that file exists, and returns its instance
+	
+	* @param filePath filePath
+	
+	* @param data Data to write, even if file already exists, its still being overwrited with specified data
+	
+	* @returns Valid directory
+	
+	*/
+	createFile(filePath, data) {
+		return this.getFile(filePath).create(data);
+	}
+};
+
+//#endregion
+//#region src/io/virtual/virtual-file.ts
+var VirtualFile = class extends VirtualEntry {
+	type = VirtualEntryType.File;
+};
+
+//#endregion
+//#region src/io/physical/physical-file.ts
+const files = new Map();
+var PhysicalFile = class extends VirtualFile {
+	name;
+	fullPath;
+	constructor(path$1) {
+		const f = PATH$1.resolve(path$1);
+		if (files.has(f)) return files.get(f);
+		super();
+		this.fullPath = f;
+		this.name = PATH$1.basename(f);
+	}
+	async writeFile(data) {
+		return promises.writeFile(this.fullPath, data);
+	}
+	async readFile() {
+		return promises.readFile(this.fullPath);
+	}
+	async tryReadFile() {
+		if (await this.isValid()) return this.readFile();
+		return null;
+	}
+	getBaseDirectory() {
+		return new PhysicalDirectory(PATH$1.dirname(this.fullPath));
+	}
+	async isValid() {
+		return existsSync(this.fullPath);
+	}
+	async delete() {
+		await promises.rm(this.fullPath);
+		return !this.isValid();
+	}
+	async create(data) {
+		if (await this.isValid()) {
+			if (data) await this.writeFile(data);
+			return this;
+		}
+		if (!await this.getBaseDirectory().isValid()) await this.getBaseDirectory().create();
+		await this.writeFile(data ?? "");
+		return this;
+	}
+};
+
+//#endregion
+//#region src/io/physical/physical-directory.ts
+const directories = new Map();
+var PhysicalDirectory = class PhysicalDirectory extends VirtualDirectory {
+	name;
+	fullPath;
+	constructor(filePath) {
+		const f = PATH.resolve(filePath);
+		if (directories.has(f)) return directories.get(f);
+		super();
+		this.fullPath = f;
+		this.name = PATH.basename(this.fullPath);
+		directories.set(f, this);
+	}
+	async *getEntries(recursive) {
+		for (const info of await promises.readdir(this.fullPath, { withFileTypes: true })) if (info.isFile()) yield new PhysicalFile(info.path);
+		else if (info.isDirectory()) {
+			const dir = new PhysicalDirectory(info.path);
+			yield dir;
+			if (recursive) yield* dir.getEntries(recursive);
+		}
+	}
+	async *getFiles(recursive) {
+		for (const info of await promises.readdir(this.fullPath, { withFileTypes: true })) if (info.isFile()) yield new PhysicalFile(info.path);
+		else if (info.isDirectory()) {
+			const dir = new PhysicalDirectory(info.path);
+			yield dir;
+			if (recursive) yield* dir.getFiles(recursive);
+		}
+	}
+	async *getDirectories(recursive) {
+		for (const info of await promises.readdir(this.fullPath, { withFileTypes: true })) if (info.isDirectory()) {
+			const dir = new PhysicalDirectory(info.path);
+			yield dir;
+			if (recursive) yield* dir.getDirectories(recursive);
+		}
+	}
+	async hasEntry(relativePath) {
+		return FS.existsSync(PATH.resolve(this.fullPath, relativePath));
+	}
+	async hasFile(relativePath) {
+		return promises.stat(PATH.resolve(this.fullPath, relativePath)).then((e) => e.isFile()).catch((e) => false);
+	}
+	async hasDirectory(relativePath) {
+		return promises.stat(PATH.resolve(this.fullPath, relativePath)).then((e) => e.isDirectory()).catch((e) => false);
+	}
+	getFile(relativePath) {
+		return new PhysicalFile(PATH.resolve(this.fullPath, relativePath));
+	}
+	getDirectory(relativePath) {
+		return new PhysicalDirectory(PATH.resolve(this.fullPath, relativePath));
+	}
+	getBaseDirectory() {
+		return new PhysicalDirectory(PATH.resolve(this.fullPath, ".."));
+	}
+	isValid() {
+		return this.hasDirectory(".");
+	}
+	async delete(removeAll = false) {
+		if (!this.isValid()) return false;
+		const tasks = [];
+		for await (const entry of this.getEntries()) tasks.push(entry.delete.call(entry, removeAll));
+		await Promise.all(tasks);
+		return promises.rmdir(this.fullPath).then((e) => true, (e) => false);
+	}
+	async create() {
+		if (await this.isValid()) return this;
+		if (!await this.getBaseDirectory().isValid()) await this.getBaseDirectory().create();
+		await promises.mkdir(this.fullPath);
+		return this;
+	}
+};
+
+//#endregion
+//#region src/cli/base.ts
+program.action((e) => {
+	console.log(program.helpInformation());
+});
+Promise.resolve().then(() => program.parse(process.argv));
+const CURRENT_WORKING_DIRECTORY = new PhysicalDirectory(".");
+
+//#endregion
+//#region src/consts.ts
+const CONFIG_FILE_NAME = "config.json";
+const MANIFEST_FILE_NAME = "manifest.json";
+const PACK_ICON_FILE_NAME = "pack_icon.png";
+const MIN_ENGINE_VERSION_ARRAY = [
+	1,
+	21,
+	0
+];
+const MIN_ENGINE_VERSION = MIN_ENGINE_VERSION_ARRAY.join(".");
+const MAIN_COLOR = ConsoleColor(240, 240, 240);
+const SECONDARY_COLOR = ConsoleColor(100, 100, 100);
+const PRIMARY_COLOR = ConsoleColor(80, 200, 130);
+const ERROR_COLOR = ConsoleColor(240, 100, 80);
+const PUBLISHER_ID = "8wekyb3d8bbwe";
+const CORPORATION_ID = "Microsoft";
+const LATEST_NAME = "MinecraftUWP";
+const Preview_NAME = "MinecraftWindowsBeta";
+const LATEST_MINECRAFT_PACAKGE_FAMILY = `${CORPORATION_ID}.${LATEST_NAME}_${PUBLISHER_ID}`;
+const PREVIEW_MINECRAFT_PACAKGE_FAMILY = `${CORPORATION_ID}.${Preview_NAME}_${PUBLISHER_ID}`;
+const LATEST_COM_MOJANG = path.resolve(process$1.env.APPDATA ?? ".", `../Local/Packages/${LATEST_MINECRAFT_PACAKGE_FAMILY}/LocalState/games/com.mojang`);
+const PREVIEW_COM_MOJANG = path.resolve(process$1.env.APPDATA ?? ".", `../Local/Packages/${PREVIEW_MINECRAFT_PACAKGE_FAMILY}/LocalState/games/com.mojang`);
+const PACK_ICON_PNG = "iVBORw0KGgoAAAANSUhEUgAAALAAAACwCAYAAACvt+ReAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAR7SURBVHhe7d1Pb04JFMfxXtTfGqZPVM1DnlQQ0qaRDJ1EatGNDQaxYTNhYyHeh1fRdGHBlpnZSbpgFoqNaHRhNBKl0TRMGCUjU4vnLLyAcxbf5PtJGr+l3Hw1d3Pc5vrp0dWeAoOtvli5Fpc/xsq18O5TrFwL71diMYwNtWLlqnq+a+JPCcmAhWbAQjNgoRmw0AxYaAYsNAMWmgELzYCFZsBCM2ChGbDQDFhoBiw0AxaaAQvNgIVmwEIzYKEZsNCaqUvHSq6SJ6fnYuU6vKc/Vq6f9w3EylV1RT0zvxwr19ipy7GSzd6JkavsN/Dm9etKfqTvlQW8ZUNvyY/0Pd+BhWbAQjNgoRmw0AxYaAYsNAMWmgELzYCFZsBCM2ChGbDQDFhoBiw0AxaaAQvNgIVmwEIzYKE1453+kqvkkxevxso188dUrFyrq//HynXm6FCsXFXXzg9eLMXKVfUcmhP7B0oCnjh/JVauqoC3bqy5eJ4YacfKVRXwszf/xMpV9RyacyPtkoCr/n+BqoDb2zfFykX7/yaqvipf9Rx8BxaaAQvNgIVmwEIzYKEZsNAMWGgGLDQDFpoBC82AhWbAQjNgoRmw0AxYaAYsNAMWmgELzYCF1lw/PVpyE1d13frL3h2xcg22+mLlot2utX/cHCvXn09excpVFnDVdeuhXdti5TLgrqqAp+cWY+UqC5j2gA24q+r5Vn1d33dgoRmw0AxYaAYsNAMWmgELzYCFZsBCM2ChGbDQDFhoBiw0AxaaAQvNgIVmwEIzYKEZsNAMWGjN2eFdJTdxTVPzb2Ppw0qsXCdHd8fKRfvy5eT0XKxcO7bWfAm1+e1IpyTgD5+/xsr175f/YuWaODgYKxct4Jt/PY+Va8uG3li5mmvj+2qukt/X/KasMjbUipWLFvCdRy9jMfgOLDQDFpoBC82AhWbAQjNgoRmw0AxYaAYsNAMWmgELzYCFZsBCM2ChGbDQDFhoBiw0AxaaAQutmbp0rOQm7vHzt7FyVd3alV07X7waK9eD3ydj5ar6FnXVbaABh7Jr5/NXYuV6dvdGrFxV36I24IC7dj51OVauhfu3YuWq+lZyVcC+AwvNgIVmwEIzYKEZsNAMWGgGLDQDFpoBC82AhWbAQjNgoRmw0AxYaAYsNAMWmgELzYCFZsBCK/tSZ9Vt1cz8cqxcvx7pxMp1b/Z1rFzHh3+Klev2w/lYuaqunQ04VAU8+7Lm7zvcqfk07vTThVi5qq6dDThUBby4/DFWrsFWX6xcVdfkVT34Diw0AxaaAQvNgIVmwEIzYKEZsNAMWGgGLDQDFpoBC82AhWbAQjNgoRmw0AxYaAYsNAMWmgELrRnv9JfcxB3e0x8rV3v8QqxcVV++rPLpy9dYud6t1Hxyt+rmsDmxf6Ak4AM7f4iVy4C7NvaujZXr76WaI9SygM+NtGuukrdvipXLgLu8+u7yHVhoBiw0AxaaAQvNgIVmwEIzYKEZsNAMWGgGLDQDFpoBC82AhWbAQjNgoRmw0AxYaAYsNAMWWE/PN+P8+8fhE3qsAAAAAElFTkSuQmCC";
+
+//#endregion
+//#region src/utils/json-validator/general.ts
+var ValidatorLoader = class {
+	static loaders = new Map();
+	static RegisterType(type, loader) {
+		this.loaders.set(type, loader);
+	}
+	static Load(object) {
+		return this._load(object);
+	}
+	static LoadType(type, object) {
+		return this.loaders.get(type)?.(object);
+	}
+	static _load(object) {
+		if (typeof object.type !== "string") throw new SyntaxError("Validator data structure is not valid: " + JSON.stringify(object));
+		return this.LoadType(object.type, object);
+	}
+};
+
+//#endregion
+//#region src/utils/json-validator/abstract-value-types.ts
+let AbstractValueType = /* @__PURE__ */ function(AbstractValueType$1) {
+	AbstractValueType$1["compoud"] = "compoud";
+	AbstractValueType$1["string"] = "string";
+	AbstractValueType$1["number"] = "number";
+	AbstractValueType$1["boolean"] = "boolean";
+	AbstractValueType$1["map"] = "map";
+	AbstractValueType$1["array"] = "array";
+	AbstractValueType$1["complex"] = "complex";
+	return AbstractValueType$1;
+}({});
+
+//#endregion
+//#region src/utils/json-validator/base-validator.ts
+var BaseValidator = class {
+	constructor() {}
+};
+
+//#endregion
+//#region src/utils/json-validator/validation-error.ts
+var ValidationError = class extends Error {
+	path;
+	constructor(message, path$1) {
+		super(message + " at " + path$1.join("->"));
+		this.path = path$1;
+	}
+};
+
+//#endregion
+//#region src/utils/json-validator/primitive-validator.ts
+var StringValidator = class extends BaseValidator {
+	name = AbstractValueType.string;
+	validValues;
+	caseCare;
+	constructor() {
+		super();
+	}
+	validate(data, path$1) {
+		if (typeof data !== "string") throw new ValidationError("String expected, received '" + typeof data + "'", path$1);
+		if (!this.validValues || this.validValues.length <= 0) return true;
+		if (!this.validValues.includes(this.caseCare ? data : data.toLowerCase())) throw new ValidationError("Received string doesn't matches validValus, received '" + data + "', expected: " + this.validValues.map((e) => `'${e}'`).join(", "), path$1);
+		return true;
+	}
+	rawObjectType() {
+		const obj = {
+			type: AbstractValueType.string,
+			caseCare: this.caseCare
+		};
+		if (this.validValues?.length) obj.validValues = this.validValues;
+		return obj;
+	}
+};
+ValidatorLoader.RegisterType(AbstractValueType.string, (obj) => {
+	const type = new StringValidator();
+	type.validValues = obj.validvalues?.map((e) => String(e)) ?? [];
+	type.caseCare = obj.caseCare;
+	return type;
+});
+var NumberValidator = class extends BaseValidator {
+	name = AbstractValueType.number;
+	max = Number.MAX_SAFE_INTEGER;
+	min = Number.MIN_SAFE_INTEGER;
+	constructor() {
+		super();
+	}
+	validate(data, path$1) {
+		if (typeof data !== "number") throw new ValidationError("Number expected, received '" + typeof data + "'", path$1);
+		if (typeof this.max === "number" && data > this.max) throw new ValidationError(`The number exceeds the maximum value, '${data}' is more than '${this.max}'"`, path$1);
+		if (typeof this.min === "number" && data < this.min) throw new ValidationError(`The number does not reach the minimum value, '${data}' is less than '${this.min}'"`, path$1);
+		return true;
+	}
+	rawObjectType() {
+		return {
+			type: AbstractValueType.number,
+			min: this.min,
+			max: this.max
+		};
+	}
+};
+ValidatorLoader.RegisterType(AbstractValueType.number, (obj) => {
+	const type = new NumberValidator();
+	type.max = Number(obj.max ?? Number.MAX_SAFE_INTEGER);
+	type.min = Number(obj.min ?? Number.MIN_SAFE_INTEGER);
+	return type;
+});
+var BooleanValidator = class extends BaseValidator {
+	name = AbstractValueType.boolean;
+	constructor() {
+		super();
+	}
+	validate(data, path$1) {
+		if (typeof data !== "boolean") throw new ValidationError("Boolean expected, received '" + typeof data + "'", path$1);
+		return true;
+	}
+	rawObjectType() {
+		return { type: AbstractValueType.boolean };
+	}
+};
+ValidatorLoader.RegisterType(AbstractValueType.boolean, (obj) => {
+	return new BooleanValidator();
+});
+
+//#endregion
+//#region src/utils/json-validator/complex-validators.ts
+var CompoudValidator = class extends BaseValidator {
+	name = AbstractValueType.compoud;
+	whitelisted = false;
+	properties = [];
+	constructor() {
+		super();
+	}
+	validate(value, path$1) {
+		if (typeof value !== "object") throw new ValidationError("Object expected, received '" + typeof value + "'", path$1);
+		for (const property of this.properties) if (!(property.propertyName in value) && !property.isOptional) throw new ValidationError("Missing object property '" + property.propertyName + "'", path$1);
+		else if (property.propertyName in value) return property.validate(value[property.propertyName], [...path$1, property.propertyName]);
+		return true;
+	}
+	rawObjectType() {
+		return {
+			type: AbstractValueType.compoud,
+			whitelisted: this.whitelisted,
+			properties: this.properties.map((e) => e.rawObjectType())
+		};
+	}
+};
+ValidatorLoader.RegisterType(AbstractValueType.compoud, (obj) => {
+	const type = new CompoudValidator();
+	type.properties = obj.properties.map((e) => ValidatorLoader.LoadType("__property", e));
+	type.whitelisted = obj.whitelisted;
+	return type;
+});
+var ObjectPropertyValidator = class extends BaseValidator {
+	name = "__property";
+	type;
+	propertyName;
+	isOptional = false;
+	constructor(type, propertyName) {
+		super();
+		this.type = type;
+		this.propertyName = propertyName;
+	}
+	validate(value, path$1) {
+		return this.type.validate(value, path$1);
+	}
+	rawObjectType() {
+		const obj = this.type.rawObjectType();
+		obj.name = this.propertyName;
+		obj.optional = this.isOptional ?? false;
+		return obj;
+	}
+};
+ValidatorLoader.RegisterType("__property", (obj) => {
+	const type = new ObjectPropertyValidator(ValidatorLoader.LoadType(obj.type, obj), obj.name);
+	type.isOptional = obj.optional;
+	return type;
+});
+var MapValidator = class extends BaseValidator {
+	name = AbstractValueType.map;
+	valueType;
+	constructor(valueType) {
+		super();
+		this.valueType = valueType;
+	}
+	validate(value, path$1) {
+		if (typeof value !== "object") throw new ValidationError("Object expected, received '" + typeof value + "'", path$1);
+		for (const property of Object.getOwnPropertyNames(value)) if (!this.valueType.validate(value[property], [...path$1, property])) return false;
+		return true;
+	}
+	rawObjectType() {
+		return {
+			type: AbstractValueType.map,
+			valueType: this.valueType.rawObjectType()
+		};
+	}
+};
+ValidatorLoader.RegisterType(AbstractValueType.map, (obj) => {
+	return new MapValidator(ValidatorLoader.Load(obj.valueType));
+});
+var ArrayValidator = class extends BaseValidator {
+	name = AbstractValueType.array;
+	valueType;
+	constructor(valueType) {
+		super();
+		this.valueType = valueType;
+	}
+	validate(value, path$1) {
+		if (!Array.isArray(value)) throw new ValidationError("Array expected, received '" + typeof value + "'", path$1);
+		for (const [index, v] of value.entries()) if (!this.valueType.validate(v, [...path$1, `[${index}]`])) return false;
+		return true;
+	}
+	rawObjectType() {
+		return {
+			type: AbstractValueType.compoud,
+			valueType: this.valueType.rawObjectType()
+		};
+	}
+};
+ValidatorLoader.RegisterType(AbstractValueType.array, (obj) => {
+	return new ArrayValidator(ValidatorLoader.Load(obj.valueType));
+});
+var ComplexValidator = class extends BaseValidator {
+	name = AbstractValueType.complex;
+	validTypes;
+	constructor() {
+		super();
+		this.validTypes = [];
+	}
+	validate(value, path$1) {
+		let lastError = null;
+		for (const type of this.validTypes) try {
+			type.validate(value, path$1);
+			break;
+		} catch (error) {
+			lastError = error;
+		}
+		if (lastError) throw new ValidationError(`Type of ${typeof value} doesn't match any of these allowed type: ${this.validTypes.map((e) => e.name)}`, path$1);
+		return true;
+	}
+	rawObjectType() {
+		return {
+			type: this.name,
+			validTypes: this.validTypes.map((e) => e.rawObjectType())
+		};
+	}
+};
+ValidatorLoader.RegisterType(AbstractValueType.complex, (obj) => {
+	const base = new ComplexValidator();
+	for (const type of obj.validTypes) base.validTypes.push(ValidatorLoader.Load(type));
+	return base;
+});
+
+//#endregion
+//#region src/validators/config.ts
+var config_default = {
+	type: "compoud",
+	properties: [
+		{
+			type: "string",
+			name: "author",
+			optional: true
+		},
+		{
+			type: "string",
+			name: "name",
+			optional: true
+		},
+		{
+			type: "compoud",
+			name: "packs",
+			optional: true,
+			properties: [{
+				type: "string",
+				optional: true,
+				name: "behaviorPack"
+			}, {
+				type: "string",
+				optional: true,
+				name: "resourcePack"
+			}]
+		},
+		{
+			type: "compoud",
+			name: "bapi",
+			optional: true,
+			properties: [
+				{
+					type: "map",
+					optional: true,
+					name: "exports",
+					valueType: {
+						type: "compoud",
+						properties: [
+							{
+								type: "string",
+								name: "exportType",
+								validValues: [
+									"addon",
+									"packs",
+									"library",
+									"plugin"
+								]
+							},
+							{
+								type: "string",
+								name: "source"
+							},
+							{
+								type: "string",
+								name: "outDir"
+							}
+						]
+					}
+				},
+				{
+					type: "map",
+					optional: true,
+					name: "watcher",
+					valueType: {
+						type: "compoud",
+						properties: [
+							{
+								type: "string",
+								name: "exportType",
+								validValues: [
+									"addon",
+									"packs",
+									"library",
+									"plugin"
+								]
+							},
+							{
+								type: "string",
+								name: "source"
+							},
+							{
+								type: "string",
+								name: "outDir"
+							}
+						]
+					}
+				},
+				{
+					type: "string",
+					optional: true,
+					name: "workspace"
+				}
+			]
+		}
+	]
+};
+
+//#endregion
+//#region src/project/project-config/config-validator.ts
+const CONFIG_VALIDATOR = ValidatorLoader.Load(config_default);
+
+//#endregion
+//#region src/project/minecraft/manifest.ts
+var Manifest = class {
+	static HasScripting(manifest) {
+		return manifest.modules[0]?.type === "script";
+	}
+	static AsDependency(manifest) {
+		return {
+			uuid: manifest.header.uuid,
+			version: manifest.header.version
+		};
+	}
+	static CreateManifest(moduleType, version = "0.1.0-alpha") {
+		return {
+			format_version: 2,
+			header: {
+				name: `pack.name`,
+				description: `pack.description`,
+				uuid: randomUUID(),
+				min_engine_version: MIN_ENGINE_VERSION_ARRAY,
+				version
+			},
+			modules: [{
+				type: moduleType,
+				uuid: randomUUID(),
+				version
+			}],
+			dependencies: []
+		};
+	}
+};
+
+//#endregion
+//#region src/project/minecraft/project-pack.ts
+var ProjectPack = class ProjectPack {
+	/**
+	
+	* Root dir of that pack
+	
+	*/
+	rootDir;
+	manifestData;
+	static async Initialize(rootDirectory, context, manifest, log) {
+		log ??= () => {};
+		const texts = await rootDirectory.createDirectory("texts");
+		log(texts.fullPath);
+		log((await texts.createFile("languages.json", JSON.stringify(["en_US"], null, "  "))).fullPath);
+		log((await texts.createFile("en_US.lang", [`pack.name=${context.config.getName()}`, `pack.description=${context.config.getName()} by ${context.config.getAuthor()}`].join("\n"))).fullPath);
+		if (Manifest.HasScripting(manifest)) {
+			const file = await rootDirectory.createFile(manifest.modules[0].entry, "console.warn(\"Hello World\");");
+			log(file.fullPath);
+		}
+		log((await rootDirectory.createFile(MANIFEST_FILE_NAME, JSON.stringify(manifest, null, "  "))).fullPath);
+		log((await rootDirectory.createFile(PACK_ICON_FILE_NAME, Buffer.from(PACK_ICON_PNG, "base64"))).fullPath);
+	}
+	static async OpenPack(rootDirectory) {
+		if (!await rootDirectory.hasFile(MANIFEST_FILE_NAME)) throw new ReferenceError("Manifest not found in " + rootDirectory);
+		const data = await rootDirectory.getFile(MANIFEST_FILE_NAME).tryReadFile();
+		if (data == null) throw new Error("Faild to read manifest file in " + rootDirectory);
+		const raw = parse(data.toString());
+		if (raw.format_version !== 2) throw new SyntaxError("Unsuported manifest format: " + raw.format_version);
+		const packRoot = new ProjectPack(rootDirectory);
+		packRoot.manifestData = raw;
+		return packRoot;
+	}
+	/**
+	
+	*
+	
+	* @param rootDir Root dir fot new ProjectPacks
+	
+	* @returns returns new empty project pack
+	
+	*/
+	static async OpenEmpty(rootDir) {
+		return new ProjectPack(rootDir);
+	}
+	constructor(rootDirectory) {
+		this.rootDir = rootDirectory;
+	}
+	/**
+	
+	* True when folder exists with manifest.json in it
+	
+	* @returns Boolean
+	
+	*/
+	async isValid() {
+		return await this.rootDir.isValid() && await this.rootDir.hasFile("manifest.json");
+	}
+	async saveManifest() {
+		await this.rootDir.getFile(MANIFEST_FILE_NAME).create(stringify(this.manifestData, null, "  "));
+	}
+	setManifestData(data) {
+		if (data.format_version !== 2) throw new SyntaxError("Unsuported manifest format: " + data.format_version);
+		this.manifestData = data;
+		return this;
+	}
+};
+
+//#endregion
+//#region src/project/project-config/project-config.ts
+var ProjectConfig = class {
+	/**
+	
+	* Public
+	
+	*/
+	/**
+	
+	* Return and virtual source
+	
+	* @readonly
+	
+	*/
+	sourceFile;
+	/**
+	
+	* returns true if config is Loaded
+	
+	* @readonly
+	
+	*/
+	get isLoaded() {
+		return typeof this.rawObject === "object";
+	}
+	rawObject;
+	constructor(source) {
+		this.sourceFile = source;
+	}
+	validate() {
+		return CONFIG_VALIDATOR.validate(this.rawObject, [":"]);
+	}
+	safeValidate() {
+		try {
+			this.validate();
+			return null;
+		} catch (error) {
+			return error;
+		}
+	}
+	/**
+	
+	* Load a config data
+	
+	* @returns Promise with self reference
+	
+	*/
+	async load() {
+		if (!await this.sourceFile.isValid()) throw new Error("Config file not found: " + this.sourceFile.name);
+		const data = await this.sourceFile.readFile();
+		try {
+			const rawObject = JSON$1.parse(data.toString());
+			this.rawObject = rawObject;
+			return this;
+		} catch (error) {
+			throw new Error("Faild to parse config file: " + error.message);
+		}
+	}
+	/**
+	
+	* Saves a config data
+	
+	* @returns Promise with self reference
+	
+	*/
+	async save() {
+		if (!this.isLoaded) throw new Error("Config must be loaded before saving.");
+		try {
+			const data = JSON$1.stringify(this.rawObject, null, "   ");
+			await this.sourceFile.writeFile(data);
+			return this;
+		} catch (error) {
+			throw new Error("Faild to save config file: " + error.message);
+		}
+	}
+	getVersion() {
+		return this.rawObject.version;
+	}
+	setVersion(data) {
+		this.rawObject.version = data;
+	}
+	getName() {
+		return this.rawObject.name;
+	}
+	setName(data) {
+		this.rawObject.name = data;
+	}
+	getAuthor() {
+		return this.rawObject.author;
+	}
+	setAuthor(data) {
+		this.rawObject.author = data;
+	}
+	getPacks() {
+		return this.rawObject.packs;
+	}
+	setPacks(data) {
+		this.rawObject.packs = data;
+	}
+	getWorkspace() {
+		return this.rawObject.bapi.workspace;
+	}
+	setWorkspace(data) {
+		this.rawObject.bapi.workspace = data;
+	}
+	async *getPackDirectories() {
+		let dir = this.sourceFile.getBaseDirectory();
+		if (!await dir.isValid()) throw new ReferenceError("Could not load config directory: " + dir);
+		if (typeof this.getWorkspace() === "string") {
+			let theDir = dir.getDirectory(this.getWorkspace());
+			if (!await theDir.isValid()) return;
+			for await (const dir$1 of theDir.getDirectories()) yield dir$1;
+		} else if (this.getPacks()) {
+			const { behaviorPack, resourcePack } = this.getPacks();
+			let p = [];
+			if (behaviorPack) p.push(behaviorPack);
+			if (resourcePack) p.push(resourcePack);
+			for (const path$1 of p) {
+				let theDir = dir.getDirectory(path$1);
+				if (!await theDir.isValid()) break;
+				yield theDir;
+			}
+		} else throw new ReferenceError("No source folders specified");
+	}
+	async *getProjectPack() {
+		for await (const dir of this.getPackDirectories()) {
+			const manifestFile = await dir.getFile(MANIFEST_FILE_NAME);
+			if (manifestFile != null) {
+				const p = await ProjectPack.OpenEmpty(dir);
+				yield p.setManifestData(JSON$1.parse((await manifestFile.readFile()).toString()));
+			}
+		}
+	}
+};
+
+//#endregion
+//#region src/project/project-context.ts
+var ProjectContext = class ProjectContext {
+	_cli;
+	_config;
+	workingDirectory;
+	get config() {
+		return this._config;
+	}
+	/**
+	
+	* @param base working directory
+	
+	*/
+	constructor(base) {
+		this.workingDirectory = base;
+		this._config = null;
+	}
+	/**
+	
+	*
+	
+	* @param base Project's working directory
+	
+	* @returns Promise with new ProjectContext instance
+	
+	*/
+	static CreateProject(base, config) {
+		const context = new ProjectContext(base);
+		context._config = config;
+		return context;
+	}
+	/**
+	
+	* Opens existing project from existing 'config.json' file
+	
+	* @param base Project's working directory
+	
+	* @returns Promise with new ProjectContext instance
+	
+	*/
+	static async OpenProject(base, configFileName) {
+		const context = new ProjectContext(base);
+		const file = await base.getFile(configFileName ?? CONFIG_FILE_NAME);
+		if (file == null) throw new ReferenceError("File not found  file_name: '" + (configFileName ?? CONFIG_FILE_NAME) + "'");
+		context._config = new ProjectConfig(file);
+		await context._config.load();
+		context._config.validate();
+		return context;
+	}
+};
+
+//#endregion
+//#region src/cli/init/questions.ts
+const QUESTIONS = [
+	{
+		name: "Project Name",
+		default: path.basename(path.resolve(".")),
+		propertyName: "name"
+	},
+	{
+		name: "Author",
+		default: process.env.username,
+		propertyName: "author"
+	},
+	{
+		name: "Version",
+		default: "0.1.0",
+		propertyName: "version",
+		isInvalid(data) {
+			const nums = data.split("-")[0].split(".");
+			if (nums.length < 3) {
+				if (Number.isFinite(Number(nums[0]))) {
+					this.default = nums[0] + ".0.0";
+					if (Number.isFinite(Number(nums[1]))) this.default = [
+						nums[0],
+						nums[1],
+						"0"
+					].join(".");
+				}
+				return true;
+			}
+			for (const n of nums) if (!isFinite(Number(n))) return true;
+			return false;
+		}
+	},
+	{
+		name: "Init Addon (Yes/No)",
+		default: "yes",
+		isInvalid(data) {
+			const low = data.toLowerCase();
+			if (low === "yes" || low === "y") return false;
+			if (low === "n" || low === "no") return false;
+			return true;
+		},
+		getQuestions(data) {
+			const low = data.toLowerCase();
+			if (low.startsWith("y")) return [
+				{
+					name: "Behavior Pack",
+					default: "./BP",
+					propertyName: "packs.behaviorPack"
+				},
+				{
+					name: "Resource Pack",
+					default: "./RP",
+					propertyName: "packs.resourcePack"
+				},
+				{
+					name: "Use Scripts",
+					default: "yes",
+					isInvalid(data$1) {
+						const low$1 = data$1.toLowerCase();
+						if (low$1 === "yes" || low$1 === "y") return false;
+						if (low$1 === "n" || low$1 === "no") return false;
+						return true;
+					},
+					propertyName: "init.options.use_script"
+				}
+			];
+			return [];
+		}
+	}
+];
+
+//#endregion
+//#region src/MESSAGES.ts
+const COMMAND_INIT_CONFIG_EXISTS = `--------------- Error ---------------
+The config file already exists, 
+do you want to overwrite it? 
+
+If so, use the -f, --force flags to force a new config creation
+-------------------------------------`;
+
+//#endregion
+//#region src/cli/init/index.ts
+program.command("init").description("Initialize new project").option("-f, --force", "Froces the creation.").action(async (...options) => {
+	const [{ force = false }] = options;
+	if (await CURRENT_WORKING_DIRECTORY.hasEntry(CONFIG_FILE_NAME) && !force) return console$1.log(ERROR_COLOR + COMMAND_INIT_CONFIG_EXISTS);
+	const configFile = CURRENT_WORKING_DIRECTORY.getFile(CONFIG_FILE_NAME);
+	const config = new ProjectConfig(configFile);
+	const context = ProjectContext.CreateProject(CURRENT_WORKING_DIRECTORY, config);
+	config.rawObject = {};
+	const reader = console$1.CreateReader();
+	await ProccessQuestions(QUESTIONS, reader, config.rawObject, {});
+	reader.close();
+	console$1.log(ConsoleColor(50, 50, 50).toString());
+	await InitProject(context);
+	console$1.log(ConsoleColor.RESET);
+	delete config.rawObject.init;
+	config.rawObject.bapi = {
+		workspace: "packs",
+		exports: { default: {
+			exportType: "mcaddon",
+			outDire: "./releases",
+			source: "packs"
+		} },
+		watchers: { default: {} }
+	};
+	config.safeValidate();
+	config.save();
+});
+async function InitProject(context) {
+	const config = context.config;
+	const relativeDirectory = context.config.sourceFile.getBaseDirectory() ?? context.workingDirectory;
+	if (config.getPacks()) {
+		const packs = config.getPacks();
+		const dependency1 = {};
+		const dependency2 = {};
+		let task1 = Promise.resolve();
+		if (packs.behaviorPack) {
+			const isScript = config.rawObject.init.options.use_script;
+			let manifest = Manifest.CreateManifest(isScript ? "script" : "data", context.config.getVersion());
+			Object.assign(dependency1, Manifest.AsDependency(manifest));
+			manifest.dependencies = [
+				{
+					module_name: "@minecraft/server",
+					version: "1.12.0"
+				},
+				{
+					module_name: "@minecraft/server-ui",
+					version: "1.2.0"
+				},
+				dependency2
+			];
+			manifest.modules[0].entry = "scripts/index.js";
+			const data = await relativeDirectory.createDirectory(packs.behaviorPack);
+			task1 = ProjectPack.Initialize(data, context, manifest, console$1.log);
+		}
+		if (packs.resourcePack) {
+			let manifest = Manifest.CreateManifest("resources", context.config.getVersion());
+			Object.assign(dependency2, Manifest.AsDependency(manifest));
+			manifest.dependencies.push(dependency1);
+			await task1;
+			const data = await relativeDirectory.createDirectory(packs.resourcePack);
+			await ProjectPack.Initialize(data, context, manifest, console$1.log);
+		}
+	}
+}
+async function ProccessQuestions(questions, reader, config, DATA) {
+	for (const q of questions) while (true) {
+		const { name, default: def, getQuestions, isInvalid, propertyName, setValue, map } = q;
+		const ask = `${ConsoleColor.RESET}${name} ${def ? `${SECONDARY_COLOR}(${def}) ` : ""}${PRIMARY_COLOR}`;
+		let data = await reader.ReadLineAsync(ask);
+		data = (data.length > 0 ? data : def) ?? "";
+		if (isInvalid?.call(q, data, DATA)) continue;
+		const moreQuestions = getQuestions?.call(q, data, DATA);
+		if (moreQuestions) await ProccessQuestions(moreQuestions, reader, config, DATA);
+		setValue?.call(q, config, data, DATA);
+		if (propertyName) {
+			const pathTo = propertyName.split(".");
+			let object = config;
+			let lastProperty = null;
+			for (const property of pathTo) {
+				if (lastProperty) object = object[lastProperty] = object[lastProperty] ?? {};
+				lastProperty = property;
+			}
+			object[lastProperty] = map ? map.call(q, data, DATA) : data;
+		}
+		break;
+	}
+}
+
+//#endregion
