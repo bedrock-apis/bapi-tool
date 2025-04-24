@@ -5,7 +5,6 @@ import util from 'node:util';
 import { start } from '../cli/init';
 import { scanForSymbolsUsedIn, ScanReportSymbols } from './main';
 import { ScanReportFormat } from './report-format';
-import picocolors from 'picocolors';
 
 
 type ScanReportGenerator = (
