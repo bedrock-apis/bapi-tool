@@ -11,6 +11,9 @@ importers:
       '@oxc-project/runtime':
         specifier: 0.66.0
         version: 0.66.0
+      chalk:
+        specifier: ^5.4.1
+        version: 5.4.1
       chokidar:
         specifier: 4.0.3
         version: 4.0.3
@@ -44,7 +47,7 @@ importers:
         version: 3.3.2
       rolldown:
         specifier: 1.0.0-beta.8
-        version: 1.0.0-beta.8(@oxc-project/runtime@0.66.0)(typescript@5.8.3)
+        version: 1.0.0-beta.8(typescript@5.8.3)
 
 packages:
 
@@ -184,6 +187,10 @@ packages:
 
   array-timsort@1.0.3:
     resolution: {integrity: sha512-/+3GRL7dDAGEfM6TseQk/U+mi18TU2Ms9I3UlLdUMhz2hbvGNTKdj9xniwXfUqgYhHxRx0+8UnKkvlNwVU+cWQ==}
+
+  chalk@5.4.1:
+    resolution: {integrity: sha512-zgVZuo2WcZgfUEmsn6eO3kINexW8RAE4maiQ8QNs8CtpPCSyMiYsULR3HQYkm3w8FIA3SberyMJMSldGsW+U3w==}
+    engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
 
   chokidar@4.0.3:
     resolution: {integrity: sha512-Qgzu8kfBvo+cA4962jnP1KkS6Dop5NS6g7R5LFYJr4b8Ub94PPQXUksCw9PvXoeXPRRddRNC5C1JQUR2SMGtnA==}
@@ -406,6 +413,8 @@ snapshots:
 
   array-timsort@1.0.3: {}
 
+  chalk@5.4.1: {}
+
   chokidar@4.0.3:
     dependencies:
       readdirp: 4.1.2
@@ -478,14 +487,13 @@ snapshots:
 
   repeat-string@1.6.1: {}
 
-  rolldown@1.0.0-beta.8(@oxc-project/runtime@0.66.0)(typescript@5.8.3):
+  rolldown@1.0.0-beta.8(typescript@5.8.3):
     dependencies:
       '@oxc-project/types': 0.65.0
       '@valibot/to-json-schema': 1.0.0(valibot@1.0.0(typescript@5.8.3))
       ansis: 3.17.0
       valibot: 1.0.0(typescript@5.8.3)
     optionalDependencies:
-      '@oxc-project/runtime': 0.66.0
       '@rolldown/binding-darwin-arm64': 1.0.0-beta.8
       '@rolldown/binding-darwin-x64': 1.0.0-beta.8
       '@rolldown/binding-freebsd-x64': 1.0.0-beta.8

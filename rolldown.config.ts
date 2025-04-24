@@ -20,6 +20,7 @@ export default defineConfig([
         keepNames: true,
         platform: 'node',
         output: {
+            sourcemap: 'inline',
             intro: '#!/usr/bin/env node\n', // Used to set a cli
             file: './bin/bapi',
             //dir: "./bin",
