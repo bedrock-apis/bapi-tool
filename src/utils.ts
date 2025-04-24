@@ -1,7 +1,7 @@
 import { InvalidArgumentError } from 'commander';
 
 export function validateEnum(enumV: Record<string, unknown>) {
-    return (format: string) => {
+    return (format: string): string => {
         if (!Object.keys(enumV).includes(format)) {
             throw new InvalidArgumentError('invalid format: ' + format);
         } else return format;
@@ -9,7 +9,7 @@ export function validateEnum(enumV: Record<string, unknown>) {
 }
 
 export function validateInt(range?: { min: number; max: number }) {
-    return (v: string) => {
+    return (v: string): number => {
         const parsed = parseInt(v);
         if (isNaN(parsed)) {
             throw new InvalidArgumentError(
