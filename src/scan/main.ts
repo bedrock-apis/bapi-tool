@@ -152,11 +152,21 @@ export function scanForSymbolsUsedIn(
                 )
                     return;
 
+                if (
+                    ts.isFunctionTypeNode(e.parent) ||
+                    ts.isImportClause(e.parent) ||
+                    ts.isMethodDeclaration(e.parent) ||
+                    ts.isConstructorDeclaration(e.parent)
+                )
+                    return;
+
+                const hasParent =
+                    ts.isClassDeclaration(e.parent) ||
+                    ts.isEnumDeclaration(e.parent) ||
+                    ts.isInterfaceDeclaration(e.parent);
+
                 const parent =
-                    (ts.isClassDeclaration(e.parent) ||
-                        ts.isEnumDeclaration(e.parent) ||
-                        ts.isInterfaceDeclaration(e.parent)) &&
-                    e.parent.name
+                    hasParent && e.parent.name
                         ? e.parent.name.getText()
                         : false;
 

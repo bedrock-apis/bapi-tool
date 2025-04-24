@@ -199,7 +199,12 @@ function generateJsonReport(
     output(
         JSON.stringify(
             report,
-            (_, v) => (v instanceof Map ? Object.fromEntries(v.entries()) : v),
+            (_, v) =>
+                v instanceof Map
+                    ? Object.fromEntries(
+                          [...v.entries()].map((e) => [e[0], e[1].usages]),
+                      )
+                    : v,
             space,
         ),
     );
