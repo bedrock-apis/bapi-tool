@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { defineConfig } from 'rolldown';
 import { dependencies, devDependencies } from './package.json';
 
@@ -6,10 +8,14 @@ const libNames = [
     ...Reflect.ownKeys(devDependencies),
 ].filter((e) => typeof e === 'string');
 
+fs.readdirSync('bin').forEach((e) =>
+    fs.rmSync(path.join('bin', e), { force: true, recursive: true }),
+);
+
 export default defineConfig([
     {
         external: [new RegExp(`^(${libNames.join('|')}|node:)`)],
-        input: './src/cli/index.ts',
+        input: './src/cli/bapi.ts',
         /*
         transform:{
             decorator: {
@@ -22,8 +28,7 @@ export default defineConfig([
         output: {
             sourcemap: 'inline',
             intro: '#!/usr/bin/env node\n', // Used to set a cli
-            file: './bin/bapi',
-            //dir: "./bin",
+            dir: './bin',
             minify: true,
             target: 'esnext',
         },

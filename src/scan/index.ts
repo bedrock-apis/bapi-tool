@@ -45,12 +45,13 @@ export interface ScanReport {
 export type ScanReportSymbols = Record<string, Map<string, ScanReportSymbol>>;
 
 export interface ScanReportSymbol {
-    usages: string[];
+    usages: number;
 }
 
 export function scanForSymbolsUsedIn(
     moduleNames: string[],
     tsconfigPath: string,
+    extensions = false,
     log = console.log,
     program = createProgram(tsconfigPath, log),
 ): ScanReport {
@@ -148,17 +149,12 @@ export function scanForSymbolsUsedIn(
 
             byParent[symbol.module] ??= {};
             byParent[symbol.module][parent] ??= new Map();
-            addSymbolToSymbolsMap(
-                byParent[symbol.module][symbol.name],
-                symbol.name,
-                '',
-            );
+            addSymbolToSymbolsMap(byParent[symbol.module][parent], symbol.name);
 
             to[symbol.module] ??= new Map();
             addSymbolToSymbolsMap(
                 to[symbol.module],
                 symbol.parent ? symbol.parent + '.' + symbol.name : symbol.name,
-                '',
             );
         }
     }
@@ -166,11 +162,10 @@ export function scanForSymbolsUsedIn(
     function addSymbolToSymbolsMap(
         map: Map<string, ScanReportSymbol>,
         name: string,
-        usage: string,
     ): void {
         const symbol = map.get(name);
-        if (!symbol) map.set(name, { usages: [usage] });
-        else symbol.usages.push(usage);
+        if (!symbol) map.set(name, { usages: 1 });
+        else symbol.usages++;
     }
 
     function visitImportClause(node: ts.ImportDeclaration): void {
@@ -189,11 +184,4 @@ export function scanForSymbolsUsedIn(
             if (symbol) addSymbol(symbol);
         }
     }
-}
-
-export enum ScanReportFormat {
-    Json = 'json',
-    JsonFormatted = 'json-formatted',
-    Pretty = 'pretty',
-    PrettyFile = 'pretty-file',
 }

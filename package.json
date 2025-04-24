@@ -16,6 +16,7 @@
     "bin": {
         "bapi": "./bin/bapi"
     },
+    "type": "module",
     "author": "conmaster2112",
     "license": "Apache-2.0",
     "bugs": {
