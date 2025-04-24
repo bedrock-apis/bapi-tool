@@ -1,9 +1,12 @@
 import path from 'node:path';
 import ts from 'typescript';
 
-export function createProgram(tsconfigPath: string) {
+export function createProgram(
+    tsconfigPath: string,
+    log = console.log,
+): ts.Program {
     tsconfigPath = path.resolve(tsconfigPath);
-    console.log('Using', tsconfigPath);
+    log('Using', tsconfigPath);
     const config = ts.readConfigFile(tsconfigPath, ts.sys.readFile);
     if (config.error) {
         throw new Error('Errors parsing tsconfig:', {
@@ -23,11 +26,7 @@ export function createProgram(tsconfigPath: string) {
         });
     }
 
-    console.log(
-        'Parsed config which includes',
-        parsedConfig.fileNames.length,
-        'files',
-    );
+    log('Parsed config which includes', parsedConfig.fileNames.length, 'files');
 
     const program = ts.createProgram(
         parsedConfig.fileNames,
@@ -37,20 +36,33 @@ export function createProgram(tsconfigPath: string) {
     return program;
 }
 
+export interface ScanReport {
+    symbols: ScanReportSymbols;
+    parent: Record<string, ScanReportSymbols>;
+    allSymbols: ScanReportSymbols;
+}
+
+export type ScanReportSymbols = Record<string, Map<string, ScanReportSymbol>>;
+
+export interface ScanReportSymbol {
+    usages: string[];
+}
+
 export function scanForSymbolsUsedIn(
     moduleNames: string[],
     tsconfigPath: string,
-    program = createProgram(tsconfigPath),
-) {
+    log = console.log,
+    program = createProgram(tsconfigPath, log),
+): ScanReport {
     const checker = program.getTypeChecker();
-    console.log('Scanning for', moduleNames);
+    log('Scanning for', moduleNames);
 
-    const usedSymbols: Record<string, Set<string>> = {};
-    const usedSymbolsByParent: Record<string, Record<string, Set<string>>> = {};
+    const usedSymbols: ScanReportSymbols = {};
+    const usedSymbolsByParent: Record<string, ScanReportSymbols> = {};
 
-    const allSymbols: Record<string, Set<string>> = {};
+    const allSymbols: ScanReportSymbols = {};
 
-    function visitModules(node: ts.Node) {
+    function visitModules(node: ts.Node): void {
         if (ts.isIdentifier(node)) {
             const symbol = checker.getSymbolAtLocation(node);
             if (symbol) addSymbol(symbol, allSymbols, {});
@@ -58,7 +70,7 @@ export function scanForSymbolsUsedIn(
         ts.forEachChild(node, visitModules);
     }
 
-    function visit(node: ts.Node) {
+    function visit(node: ts.Node): void {
         if (ts.isImportDeclaration(node)) {
             const moduleSpecifier = node.moduleSpecifier;
             const moduleName =
@@ -94,7 +106,7 @@ export function scanForSymbolsUsedIn(
         symbol: ts.Symbol,
         to = usedSymbols,
         byParent = usedSymbolsByParent,
-    ) {
+    ): void {
         const declarations = symbol.getDeclarations();
         if (!declarations) return;
 
@@ -122,8 +134,6 @@ export function scanForSymbolsUsedIn(
                         ? e.parent.name.getText()
                         : false;
 
-                if (!parent) console.log(e.parent.kind);
-
                 return {
                     parent: parent,
                     name: symbol.getName(),
@@ -137,17 +147,33 @@ export function scanForSymbolsUsedIn(
                 typeof symbol.parent === 'string' ? symbol.parent : 'global';
 
             byParent[symbol.module] ??= {};
-            byParent[symbol.module][parent] ??= new Set();
-            byParent[symbol.module][parent].add(symbol.name);
+            byParent[symbol.module][parent] ??= new Map();
+            addSymbolToSymbolsMap(
+                byParent[symbol.module][symbol.name],
+                symbol.name,
+                '',
+            );
 
-            to[symbol.module] ??= new Set();
-            to[symbol.module].add(
+            to[symbol.module] ??= new Map();
+            addSymbolToSymbolsMap(
+                to[symbol.module],
                 symbol.parent ? symbol.parent + '.' + symbol.name : symbol.name,
+                '',
             );
         }
     }
 
-    function visitImportClause(node: ts.ImportDeclaration) {
+    function addSymbolToSymbolsMap(
+        map: Map<string, ScanReportSymbol>,
+        name: string,
+        usage: string,
+    ): void {
+        const symbol = map.get(name);
+        if (!symbol) map.set(name, { usages: [usage] });
+        else symbol.usages.push(usage);
+    }
+
+    function visitImportClause(node: ts.ImportDeclaration): void {
         if (!node.importClause?.namedBindings) return;
 
         const namedBindings = node.importClause.namedBindings;
@@ -167,5 +193,7 @@ export function scanForSymbolsUsedIn(
 
 export enum ScanReportFormat {
     Json = 'json',
+    JsonFormatted = 'json-formatted',
     Pretty = 'pretty',
+    PrettyFile = 'pretty-file',
 }
