@@ -126,7 +126,9 @@ export function scanForSymbolsUsedIn(
                 const moduleName = moduleNames.find((moduleName) =>
                     sourceFileName.endsWith(moduleName),
                 );
-                if (!moduleName) return;
+                return { e, moduleName: moduleName ?? sourceFileName };
+            })
+            .map(({ e, moduleName }) => {
                 const parent =
                     (ts.isClassDeclaration(e.parent) ||
                         ts.isEnumDeclaration(e.parent) ||
