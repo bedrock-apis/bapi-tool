@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { createCommand } from "commander";
-import path from "path";
+import path from "node:path";
 import ts from "typescript";
 
 //#region rolldown:runtime
@@ -21,14 +21,22 @@ function createProgram(tsconfigPath) {
 	const parsedConfig = ts.parseJsonConfigFileContent(config.config, ts.sys, path.resolve(path.dirname(tsconfigPath)));
 	if (parsedConfig.errors.length) throw new Error("Errors parsing tsconfig:", { cause: parsedConfig.errors.map((e) => e.messageText) });
 	console.log("Parsed config which includes", parsedConfig.fileNames.length, "files");
-	const program$1 = ts.createProgram(parsedConfig.fileNames, parsedConfig.options);
-	return program$1;
+	const program = ts.createProgram(parsedConfig.fileNames, parsedConfig.options);
+	return program;
 }
-function scanForSymbolsUsedIn(moduleNames, tsconfigPath, program$1 = createProgram(tsconfigPath)) {
-	const checker = program$1.getTypeChecker();
+function scanForSymbolsUsedIn(moduleNames, tsconfigPath, program = createProgram(tsconfigPath)) {
+	const checker = program.getTypeChecker();
 	console.log("Scanning for", moduleNames);
 	const usedSymbols = {};
 	const usedSymbolsByParent = {};
+	const allSymbols = {};
+	function visitModules(node) {
+		if (ts.isIdentifier(node)) {
+			const symbol = checker.getSymbolAtLocation(node);
+			if (symbol) addSymbol(symbol, allSymbols, {});
+		}
+		ts.forEachChild(node, visitModules);
+	}
 	function visit(node) {
 		if (ts.isImportDeclaration(node)) {
 			const moduleSpecifier = node.moduleSpecifier;
@@ -40,12 +48,17 @@ function scanForSymbolsUsedIn(moduleNames, tsconfigPath, program$1 = createProgr
 		}
 		ts.forEachChild(node, visit);
 	}
-	for (const sourceFile of program$1.getSourceFiles()) if (!sourceFile.isDeclarationFile) visit(sourceFile);
+	for (const sourceFile of program.getSourceFiles()) {
+		if (!sourceFile.isDeclarationFile) visit(sourceFile);
+		const sourceDirname = path.dirname(sourceFile.fileName);
+		for (const moduleName of moduleNames) if (sourceDirname.endsWith(moduleName)) visitModules(sourceFile);
+	}
 	return {
 		symbols: usedSymbols,
-		parent: usedSymbolsByParent
+		parent: usedSymbolsByParent,
+		allSymbols
 	};
-	function addSymbol(symbol, moduleName) {
+	function addSymbol(symbol, to = usedSymbols, byParent = usedSymbolsByParent) {
 		const declarations = symbol.getDeclarations();
 		if (!declarations) return;
 		if (!declarations.some((declaration) => {
@@ -54,23 +67,23 @@ function scanForSymbolsUsedIn(moduleNames, tsconfigPath, program$1 = createProgr
 		})) return;
 		const symbols = declarations.map((e) => {
 			const sourceFileName = path.dirname(e.getSourceFile().fileName);
-			const moduleName$1 = moduleNames.find((moduleName$2) => sourceFileName.endsWith(moduleName$2));
-			if (!moduleName$1) return;
+			const moduleName = moduleNames.find((moduleName$1) => sourceFileName.endsWith(moduleName$1));
+			if (!moduleName) return;
 			const parent = (ts.isClassDeclaration(e.parent) || ts.isEnumDeclaration(e.parent) || ts.isInterfaceDeclaration(e.parent)) && e.parent.name ? e.parent.name.getText() : false;
 			if (!parent) console.log(e.parent.kind);
 			return {
 				parent,
 				name: symbol.getName(),
-				module: moduleName$1
+				module: moduleName
 			};
 		}).filter((e) => !!e);
 		for (const symbol$1 of symbols) {
 			const parent = typeof symbol$1.parent === "string" ? symbol$1.parent : "global";
-			usedSymbolsByParent[symbol$1.module] ??= {};
-			usedSymbolsByParent[symbol$1.module][parent] ??= new Set();
-			usedSymbolsByParent[symbol$1.module][parent].add(symbol$1.name);
-			usedSymbols[symbol$1.module] ??= new Set();
-			usedSymbols[symbol$1.module].add(symbol$1.parent ? symbol$1.parent + "." + symbol$1.name : symbol$1.name);
+			byParent[symbol$1.module] ??= {};
+			byParent[symbol$1.module][parent] ??= new Set();
+			byParent[symbol$1.module][parent].add(symbol$1.name);
+			to[symbol$1.module] ??= new Set();
+			to[symbol$1.module].add(symbol$1.parent ? symbol$1.parent + "." + symbol$1.name : symbol$1.name);
 		}
 	}
 	function visitImportClause(node) {
@@ -99,11 +112,11 @@ const scanSubcommand = createCommand("scan").description("Scans for ScriptAPI mo
 	const report = scanForSymbolsUsedIn(modules.split(","), tsconfig);
 	console.log(report.symbols);
 	console.log("Total", Object.values(report.symbols).reduce((p, c) => c.size + p, 0));
-	console.log(Object.entries(report.symbols).map((e) => e[0] + ": " + e[1].size).join("\n"));
+	console.log(Object.entries(report.symbols).map((e) => e[0] + ": " + e[1].size + " " + (e[1].size / report.allSymbols[e[0]]?.size * 100).toFixed(0) + "%").join("\n"));
 });
 
 //#endregion
 //#region src/cli/index.ts
-const program = createCommand("bapi").addCommand(scanSubcommand).parse();
+createCommand("bapi").addCommand(scanSubcommand).parse();
 
 //#endregion

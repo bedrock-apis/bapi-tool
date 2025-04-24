@@ -48,6 +48,16 @@ export function scanForSymbolsUsedIn(
     const usedSymbols: Record<string, Set<string>> = {};
     const usedSymbolsByParent: Record<string, Record<string, Set<string>>> = {};
 
+    const allSymbols: Record<string, Set<string>> = {};
+
+    function visitModules(node: ts.Node) {
+        if (ts.isIdentifier(node)) {
+            const symbol = checker.getSymbolAtLocation(node);
+            if (symbol) addSymbol(symbol, allSymbols, {});
+        }
+        ts.forEachChild(node, visitModules);
+    }
+
     function visit(node: ts.Node) {
         if (ts.isImportDeclaration(node)) {
             const moduleSpecifier = node.moduleSpecifier;
@@ -70,11 +80,21 @@ export function scanForSymbolsUsedIn(
     for (const sourceFile of program.getSourceFiles()) {
         // Skip declaration files
         if (!sourceFile.isDeclarationFile) visit(sourceFile);
+
+        // Calculate total existing symbols
+        const sourceDirname = path.dirname(sourceFile.fileName);
+        for (const moduleName of moduleNames) {
+            if (sourceDirname.endsWith(moduleName)) visitModules(sourceFile);
+        }
     }
 
-    return { symbols: usedSymbols, parent: usedSymbolsByParent };
+    return { symbols: usedSymbols, parent: usedSymbolsByParent, allSymbols };
 
-    function addSymbol(symbol: ts.Symbol) {
+    function addSymbol(
+        symbol: ts.Symbol,
+        to = usedSymbols,
+        byParent = usedSymbolsByParent,
+    ) {
         const declarations = symbol.getDeclarations();
         if (!declarations) return;
 
@@ -116,12 +136,12 @@ export function scanForSymbolsUsedIn(
             const parent =
                 typeof symbol.parent === 'string' ? symbol.parent : 'global';
 
-            usedSymbolsByParent[symbol.module] ??= {};
-            usedSymbolsByParent[symbol.module][parent] ??= new Set();
-            usedSymbolsByParent[symbol.module][parent].add(symbol.name);
+            byParent[symbol.module] ??= {};
+            byParent[symbol.module][parent] ??= new Set();
+            byParent[symbol.module][parent].add(symbol.name);
 
-            usedSymbols[symbol.module] ??= new Set();
-            usedSymbols[symbol.module].add(
+            to[symbol.module] ??= new Set();
+            to[symbol.module].add(
                 symbol.parent ? symbol.parent + '.' + symbol.name : symbol.name,
             );
         }

@@ -29,7 +29,18 @@ export const scanSubcommand = createCommand('scan')
         );
         console.log(
             Object.entries(report.symbols)
-                .map((e) => e[0] + ': ' + e[1].size)
+                .map(
+                    (e) =>
+                        e[0] +
+                        ': ' +
+                        e[1].size +
+                        ' ' +
+                        (
+                            (e[1].size / report.allSymbols[e[0]]?.size) *
+                            100
+                        ).toFixed(0) +
+                        '%',
+                )
                 .join('\n'),
         );
     });
