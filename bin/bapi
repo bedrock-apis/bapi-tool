@@ -1,13 +1,7 @@
 #!/usr/bin/env node
 
-import picocolors from "picocolors";
 
 //#region src/cli/index.ts
-console.log(picocolors.green("Hello world") + ": This is the bapi tool.");
-const a = true;
-var bob = class {
-	method() {}
-};
+console.log("hello");
 
 //#endregion
-export { a, bob };

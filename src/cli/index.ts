@@ -1,10 +1,3 @@
-import picocolors from "picocolors";
+import {createCommand} from "commander";
 
-console.log(picocolors.green("Hello world") + ": This is the bapi tool.");
-
-export const a: boolean = true;
-export class bob {
-    public method(){
-
-    }
-}
+console.log("hello");

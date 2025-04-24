@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@oxc-project/runtime':
+        specifier: ^0.61.0
+        version: 0.61.2
       chokidar:
         specifier: ^3.6.0
         version: 3.6.0
@@ -38,7 +41,7 @@ importers:
         version: 3.3.2
       rolldown:
         specifier: 1.0.0-beta.7-commit.e117288
-        version: 1.0.0-beta.7-commit.e117288
+        version: 1.0.0-beta.7-commit.e117288(@oxc-project/runtime@0.61.2)
 
 packages:
 
@@ -53,6 +56,10 @@ packages:
 
   '@napi-rs/wasm-runtime@0.2.8':
     resolution: {integrity: sha512-OBlgKdX7gin7OIq4fadsjpg+cp2ZphvAIKucHsNfTdJiqdOmOEwQd/bHi0VwNrcw5xpBJyUw6cK/QilCqy1BSg==}
+
+  '@oxc-project/runtime@0.61.2':
+    resolution: {integrity: sha512-UNv56Aa4pTtsnqapa2LC+gRxXbUZxA6j1WlSYV8+zan5sD+CvwOMSzUsMNdUUTebob6PafJfT+/TN83yWXWmSA==}
+    engines: {node: '>=6.9.0'}
 
   '@oxc-project/types@0.61.2':
     resolution: {integrity: sha512-rfuwJwvwn9MRthHNXlSo9Eka/u7gC0MhnWAoX3BhE1+rwPOl22nq0K0Y997Hof0tHCOuD7H3/Z8HTfCVhB4c5Q==}
@@ -357,6 +364,8 @@ snapshots:
       '@tybys/wasm-util': 0.9.0
     optional: true
 
+  '@oxc-project/runtime@0.61.2': {}
+
   '@oxc-project/types@0.61.2': {}
 
   '@oxlint/darwin-arm64@0.16.5':
@@ -556,12 +565,13 @@ snapshots:
 
   repeat-string@1.6.1: {}
 
-  rolldown@1.0.0-beta.7-commit.e117288:
+  rolldown@1.0.0-beta.7-commit.e117288(@oxc-project/runtime@0.61.2):
     dependencies:
       '@oxc-project/types': 0.61.2
       '@valibot/to-json-schema': 1.0.0(valibot@1.0.0)
       valibot: 1.0.0
     optionalDependencies:
+      '@oxc-project/runtime': 0.61.2
       '@rolldown/binding-darwin-arm64': 1.0.0-beta.7-commit.e117288
       '@rolldown/binding-darwin-x64': 1.0.0-beta.7-commit.e117288
       '@rolldown/binding-freebsd-x64': 1.0.0-beta.7-commit.e117288
