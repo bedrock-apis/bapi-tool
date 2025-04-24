@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import util from 'node:util';
 import { start } from '../cli/init';
-import { scanForSymbolsUsedIn, ScanReportSymbols } from './main';
+import { scanForSymbolsUsedIn, ScanReportModules } from './main';
 import { ScanReportFormat } from './report-format';
 
 type ScanReportGenerator = (
@@ -45,7 +45,7 @@ function generatePrettyReport(
     if (file) console.log('Written to', path.resolve(file));
 
     const usedSymbols = countSymbols(report.symbols);
-    const allSymbols = countSymbols(report.allSymbols);
+    const allSymbols = countSymbols(report.all);
 
     output(' ');
     output(`Top ${topFiles} most used symbols: `);
@@ -68,22 +68,22 @@ function generatePrettyReport(
 
     if (file) output();
     output(
-        `${chalk.bold('Total symbols count')}: ${percent(usedSymbols, allSymbols)}`,
+        `${chalk.bold('Total symbols usage')}: ${percent(usedSymbols, allSymbols)}`,
     );
     output(' ');
     output(
         Object.entries(report.symbols)
             .map(([name, symbols]) => {
-                if (!report.allSymbols[name]) return;
+                if (!report.all[name]) return;
 
-                return `${chalk.bold(name)}: ${percent(symbols.size, report.allSymbols[name].size)}`;
+                return `${chalk.bold(name)}: ${percent(symbols.size, report.all[name].size)}`;
             })
             .join('\n'),
     );
 
     if (file) {
         output(' ');
-        for (const [moduleName, parents] of Object.entries(report.parent)) {
+        for (const [moduleName, parents] of Object.entries(report.byParent)) {
             output(' ');
             output(' ');
             output('> ' + moduleName);
@@ -106,13 +106,13 @@ function createOutput(file: string | undefined) {
     const output = file
         ? (...values: unknown[]) => {
               const string = util.format(...values);
-              if (fileStream) fileStream.write(string);
+              if (fileStream) fileStream.write(string + '\n');
           }
         : console.log;
     return output;
 }
 
-function countSymbols(symbols: ScanReportSymbols): number {
+function countSymbols(symbols: ScanReportModules): number {
     return Object.values(symbols).reduce((p, c) => c.size + p, 0);
 }
 

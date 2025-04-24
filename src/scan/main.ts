@@ -37,12 +37,16 @@ export function createProgram(
 }
 
 export interface ScanReport {
-    symbols: ScanReportSymbols;
-    parent: Record<string, ScanReportSymbols>;
-    allSymbols: ScanReportSymbols;
+    symbols: ScanReportModules;
+    byParent: ScanReportSymbolsByParent;
+    all: ScanReportModules;
 }
 
-export type ScanReportSymbols = Record<string, Map<string, ScanReportSymbol>>;
+export type ScanReportSymbolsByParent = Record<string, ScanReportModules>;
+
+type ScanReportSymbols = Map<string, ScanReportSymbol>;
+
+export type ScanReportModules = Record<string, ScanReportSymbols>;
 
 export interface ScanReportSymbol {
     usages: number;
@@ -58,10 +62,10 @@ export function scanForSymbolsUsedIn(
     const checker = program.getTypeChecker();
     log('Scanning for', moduleNames);
 
-    const usedSymbols: ScanReportSymbols = {};
-    const usedSymbolsByParent: Record<string, ScanReportSymbols> = {};
+    const usedSymbols: ScanReportModules = {};
+    const usedSymbolsByParent: Record<string, ScanReportModules> = {};
 
-    const allSymbols: ScanReportSymbols = {};
+    const allSymbols: ScanReportModules = {};
 
     function visitModules(node: ts.Node): void {
         if (ts.isIdentifier(node)) {
@@ -101,7 +105,11 @@ export function scanForSymbolsUsedIn(
         }
     }
 
-    return { symbols: usedSymbols, parent: usedSymbolsByParent, allSymbols };
+    return {
+        symbols: sortModules(usedSymbols),
+        byParent: sortSymbolsByParent(usedSymbolsByParent),
+        all: sortModules(allSymbols),
+    };
 
     function addSymbol(
         symbol: ts.Symbol,
@@ -126,9 +134,9 @@ export function scanForSymbolsUsedIn(
                 const moduleName = moduleNames.find((moduleName) =>
                     sourceFileName.endsWith(moduleName),
                 );
-                return { e, moduleName: moduleName ?? sourceFileName };
-            })
-            .map(({ e, moduleName }) => {
+
+                if (!extensions && !moduleName) return;
+
                 const parent =
                     (ts.isClassDeclaration(e.parent) ||
                         ts.isEnumDeclaration(e.parent) ||
@@ -140,7 +148,7 @@ export function scanForSymbolsUsedIn(
                 return {
                     parent: parent,
                     name: symbol.getName(),
-                    module: moduleName,
+                    module: moduleName ?? sourceFileName,
                 };
             })
             .filter((e) => !!e);
@@ -186,4 +194,28 @@ export function scanForSymbolsUsedIn(
             if (symbol) addSymbol(symbol);
         }
     }
+}
+
+function sortModules(modules: ScanReportModules): ScanReportModules {
+    return Object.fromEntries(
+        Object.entries(modules)
+            .sort((a, b) => b[1].size - a[1].size)
+            .map(([k, v]) => [k, sortSymbols(v)]),
+    );
+}
+
+function sortSymbols(symbols: ScanReportSymbols): ScanReportSymbols {
+    return new Map(
+        [...symbols.entries()].sort((a, b) => b[1].usages - a[1].usages),
+    );
+}
+
+function sortSymbolsByParent(
+    parent: ScanReportSymbolsByParent,
+): ScanReportSymbolsByParent {
+    return Object.fromEntries(
+        Object.entries(parent)
+            .sort((a, b) => Object.keys(b[1]).length - Object.keys(a[1]).length)
+            .map(([k, v]) => [k, sortModules(v)]),
+    );
 }
