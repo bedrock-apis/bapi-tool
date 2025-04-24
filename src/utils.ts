@@ -2,7 +2,7 @@ import { InvalidArgumentError } from 'commander';
 
 export function validateEnum(enumV: Record<string, unknown>) {
     return (format: string): string => {
-        if (!Object.keys(enumV).includes(format)) {
+        if (!Object.values(enumV).includes(format)) {
             throw new InvalidArgumentError('invalid format: ' + format);
         } else return format;
     };
