@@ -22,17 +22,17 @@
   },
   "homepage": "https://github.com/bedrock-apis/bapi-tool#readme",
   "peerDependencies": {
-    "@oxc-project/runtime": "^0.61.0"
+    "@oxc-project/runtime": "0.66.0"
   },
   "devDependencies": {
-    "@types/node": "^20.11.30",
+    "@types/node": "22.14.1",
     "oxlint": "^0.16.5",
     "prettier": "3.3.2",
-    "rolldown": "1.0.0-beta.7-commit.e117288"
+    "rolldown": "1.0.0-beta.8"
   },
   "dependencies": {
-    "chokidar": "^3.6.0",
-    "commander": "^12.0.0",
+    "chokidar": "4.0.3",
+    "commander": "^13.1.0",
     "comment-json": "^4.2.3",
     "jsonverify": "^1.0.1",
     "jszip": "^3.10.1",
@@ -44,7 +44,7 @@
     "semi": true,
     "quoteProps": "consistent",
     "singleQuote": true,
-    "endOfLine": "lf"
+    "endOfLine": "crlf"
   },
   "packageManager": "pnpm@10.8.0+sha512.0e82714d1b5b43c74610193cb20734897c1d00de89d0e18420aebc5977fa13d780a9cb05734624e81ebd81cc876cd464794850641c48b9544326b5622ca29971"
 }
