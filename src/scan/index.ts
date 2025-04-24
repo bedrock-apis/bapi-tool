@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 import ts from 'typescript';
 
 export function createProgram(tsconfigPath: string) {
@@ -74,7 +74,7 @@ export function scanForSymbolsUsedIn(
 
     return { symbols: usedSymbols, parent: usedSymbolsByParent };
 
-    function addSymbol(symbol: ts.Symbol, moduleName?: string) {
+    function addSymbol(symbol: ts.Symbol) {
         const declarations = symbol.getDeclarations();
         if (!declarations) return;
 
@@ -144,6 +144,7 @@ export function scanForSymbolsUsedIn(
         }
     }
 }
+
 export enum ScanReportFormat {
     Json = 'json',
     Pretty = 'pretty',
