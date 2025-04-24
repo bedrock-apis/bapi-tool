@@ -6,6 +6,7 @@ import { start } from '../cli/init';
 import { scanForSymbolsUsedIn, ScanReportModules } from './main';
 import { ScanReportFormat } from './report-format';
 
+
 type ScanReportGenerator = (
     modules: string[],
     tsconfigPath: string,
