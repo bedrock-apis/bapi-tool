@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import path from 'node:path';
 import ts from 'typescript';
 
@@ -6,12 +7,15 @@ export function createProgram(
     log = console.log,
 ): ts.Program {
     tsconfigPath = path.resolve(tsconfigPath);
-    log('Using', tsconfigPath);
+    log('Using', chalk.cyan(tsconfigPath));
     const config = ts.readConfigFile(tsconfigPath, ts.sys.readFile);
     if (config.error) {
-        throw new Error('Errors parsing tsconfig:', {
-            cause: config.error.messageText,
-        });
+        if (typeof config.error.messageText === 'string') {
+            throw new Error(config.error.messageText);
+        } else
+            throw new Error('Errors parsing tsconfig:', {
+                cause: config.error.messageText,
+            });
     }
 
     const parsedConfig = ts.parseJsonConfigFileContent(
@@ -60,7 +64,12 @@ export function scanForSymbolsUsedIn(
     program = createProgram(tsconfigPath, log),
 ): ScanReport {
     const checker = program.getTypeChecker();
-    log('Scanning for', moduleNames);
+    log(
+        'Scanning for',
+        moduleNames.map((e) => chalk.cyan(e)).join(' '),
+        'with extensions',
+        extensions ? chalk.greenBright('enabled') : 'disabled',
+    );
 
     const usedSymbols: ScanReportModules = {};
     const usedSymbolsByParent: Record<string, ScanReportModules> = {};
@@ -136,6 +145,12 @@ export function scanForSymbolsUsedIn(
                 );
 
                 if (!extensions && !moduleName) return;
+                if (
+                    extensions &&
+                    !moduleName &&
+                    sourceFileName.includes('node_modules')
+                )
+                    return;
 
                 const parent =
                     (ts.isClassDeclaration(e.parent) ||

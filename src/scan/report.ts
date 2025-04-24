@@ -1,11 +1,11 @@
 import chalk from 'chalk';
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import util from 'node:util';
 import { start } from '../cli/init';
 import { scanForSymbolsUsedIn, ScanReportModules } from './main';
 import { ScanReportFormat } from './report-format';
-
 
 type ScanReportGenerator = (
     modules: string[],
@@ -31,25 +31,48 @@ function generatePrettyReport(
     extensions: boolean,
     file: string | undefined,
 ): void {
+    if (file) {
+        console.log('Report will be written to file', chalk.cyan(file));
+    }
+
     const output = createOutput(file);
 
-    const report = scanForSymbolsUsedIn(modules, tsconfig, extensions, output);
+    const report = scanForSymbolsUsedIn(
+        modules,
+        tsconfig,
+        extensions,
+        file ? console.log : output,
+    );
 
-    if (file) chalk.level = 0;
-
+    const empty = !Object.keys(report.symbols).length;
     if (!file) {
-        console.log(report.symbols);
+        if (!empty) {
+            console.log(report.symbols);
+        } else {
+            emptyWarning(tsconfig, modules);
+        }
     }
 
     const time = Date.now() - start;
-    console.log('Done in', (time / 1000).toFixed(2) + 's');
-    if (file) console.log('Written to', path.resolve(file));
+    console.log(
+        chalk.greenBright('Done in'),
+        chalk.bold((time / 1000).toFixed(2)) + chalk.greenBright('s'),
+    );
+    if (file) {
+        console.log(
+            chalk.greenBright('Writting to'),
+            chalk.bold(path.resolve(file)),
+        );
+        chalk.level = 0;
+    }
+
+    if (empty) return;
 
     const usedSymbols = countSymbols(report.symbols);
     const allSymbols = countSymbols(report.all);
 
     output(' ');
-    output(`Top ${topFiles} most used symbols: `);
+    output(chalk.bold(`Top ${chalk.yellow(topFiles)} most used symbols: `));
     output(' ');
     const mostUsedSymbols = Object.values(report.symbols)
         .map((e) =>
@@ -100,6 +123,40 @@ function generatePrettyReport(
         }
         output(' ');
     }
+}
+
+function emptyWarning(tsconfig: string, modules: string[]) {
+    const nonexistent = getNonExistentModules(tsconfig, modules);
+
+    if (nonexistent.size) {
+        console.log(chalk.yellow('These modules do not resolve:'));
+        console.log(
+            [...nonexistent].map((e) => ` ${chalk.bold(e)}`).join('\n'),
+        );
+    }
+    console.log(
+        chalk.yellow('There is 0 usages of symbols from specified modules'),
+    );
+}
+
+function getNonExistentModules(tsconfig: string, modules: string[]) {
+    const nonexistent = new Set<string>();
+    const require = createRequire(path.resolve(path.dirname(tsconfig)));
+    for (const moduleName of modules) {
+        try {
+            require.resolve(moduleName);
+        } catch (e) {
+            if (
+                typeof e === 'object' &&
+                e &&
+                'code' in e &&
+                e.code === 'MODULE_NOT_FOUND'
+            ) {
+                nonexistent.add(moduleName);
+            } else throw e;
+        }
+    }
+    return nonexistent;
 }
 
 function createOutput(file: string | undefined) {
