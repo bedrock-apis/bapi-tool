@@ -2,9 +2,8 @@ import { createCommand } from 'commander';
 import { ScanReportFormat } from '../scan/report-format';
 import { validateEnum, validateInt } from '../utils';
 
-export const start = Date.now();
 
-export const scanSubcommand = createCommand('scan')
+export default createCommand('scan')
     .description('Scans for ScriptAPI modules used in project')
     .requiredOption(
         '--tsconfig <string>',

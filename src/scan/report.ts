@@ -2,8 +2,8 @@ import chalk from 'chalk';
 import fs from 'node:fs';
 import path from 'node:path';
 import util from 'node:util';
-import { start } from '../cli/scan';
-import { scanForSymbolsUsedIn, ScanReportSymbols } from './index';
+import { start } from '../cli/init';
+import { scanForSymbolsUsedIn, ScanReportSymbols } from './main';
 import { ScanReportFormat } from './report-format';
 
 type ScanReportGenerator = (

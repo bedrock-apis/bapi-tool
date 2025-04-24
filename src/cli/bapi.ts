@@ -1,4 +1,5 @@
+import "./init";
 import { createCommand } from 'commander';
-import { scanSubcommand } from './scan';
+import scanCommand from "./scan";
 
-export const program = createCommand('bapi').addCommand(scanSubcommand).parse();
+export const program = createCommand('bapi').addCommand(scanCommand).parse();
