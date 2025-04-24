@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import fs from 'node:fs';
 import path from 'node:path';
 import util from 'node:util';
-import { start } from '../cli/scan';
+import { start } from '../cli/init';
 import { scanForSymbolsUsedIn, ScanReportSymbols } from './index';
 import { ScanReportFormat } from './report-format';
 
