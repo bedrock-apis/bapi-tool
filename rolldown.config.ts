@@ -23,6 +23,7 @@ export default defineConfig([
             intro: '#!/usr/bin/env node\n', // Used to set a cli
             file: './bin/bapi',
             //dir: "./bin",
+            minify: true,
             target: 'esnext',
         },
     },
