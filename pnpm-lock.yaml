@@ -29,6 +29,9 @@ importers:
       picocolors:
         specifier: ^1.1.1
         version: 1.1.1
+      typescript:
+        specifier: ^5.8.3
+        version: 5.8.3
     devDependencies:
       '@types/node':
         specifier: 22.14.1
@@ -41,7 +44,7 @@ importers:
         version: 3.3.2
       rolldown:
         specifier: 1.0.0-beta.8
-        version: 1.0.0-beta.8(@oxc-project/runtime@0.66.0)
+        version: 1.0.0-beta.8(@oxc-project/runtime@0.66.0)(typescript@5.8.3)
 
 packages:
 
@@ -276,6 +279,11 @@ packages:
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
+  typescript@5.8.3:
+    resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
@@ -390,9 +398,9 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
-  '@valibot/to-json-schema@1.0.0(valibot@1.0.0)':
+  '@valibot/to-json-schema@1.0.0(valibot@1.0.0(typescript@5.8.3))':
     dependencies:
-      valibot: 1.0.0
+      valibot: 1.0.0(typescript@5.8.3)
 
   ansis@3.17.0: {}
 
@@ -470,12 +478,12 @@ snapshots:
 
   repeat-string@1.6.1: {}
 
-  rolldown@1.0.0-beta.8(@oxc-project/runtime@0.66.0):
+  rolldown@1.0.0-beta.8(@oxc-project/runtime@0.66.0)(typescript@5.8.3):
     dependencies:
       '@oxc-project/types': 0.65.0
-      '@valibot/to-json-schema': 1.0.0(valibot@1.0.0)
+      '@valibot/to-json-schema': 1.0.0(valibot@1.0.0(typescript@5.8.3))
       ansis: 3.17.0
-      valibot: 1.0.0
+      valibot: 1.0.0(typescript@5.8.3)
     optionalDependencies:
       '@oxc-project/runtime': 0.66.0
       '@rolldown/binding-darwin-arm64': 1.0.0-beta.8
@@ -504,8 +512,12 @@ snapshots:
   tslib@2.8.1:
     optional: true
 
+  typescript@5.8.3: {}
+
   undici-types@6.21.0: {}
 
   util-deprecate@1.0.2: {}
 
-  valibot@1.0.0: {}
+  valibot@1.0.0(typescript@5.8.3):
+    optionalDependencies:
+      typescript: 5.8.3

@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 import ts from 'typescript';
 
 export function createProgram(tsconfigPath: string) {
