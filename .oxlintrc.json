@@ -90,5 +90,7 @@
       "builtin": true
     },
     "globals": {},
-    "ignorePatterns": []
+    "ignorePatterns": [
+      "project-bin"
+    ]
   }
