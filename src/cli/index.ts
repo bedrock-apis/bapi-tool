@@ -1,3 +1,4 @@
-import {createCommand} from "commander";
+import { createCommand } from 'commander';
+import { scanSubcommand } from './scan';
 
-console.log("hello");
+const program = createCommand('bapi').addCommand(scanSubcommand).parse();

@@ -1,50 +1,51 @@
 {
-  "name": "bapi-tool",
-  "version": "1.0.0",
-  "description": "",
-  "main": "dist/index.js",
-  "scripts": {
-    "build": "pnpm rolldown -c",
-    "link": "pnpm link -l",
-    "format": "npx prettier src --write"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/bedrock-apis/bapi-tool.git"
-  },
-  "bin": {
-    "bapi": "./bin/bapi"
-  },
-  "author": "conmaster2112",
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/bedrock-apis/bapi-tool/issues"
-  },
-  "homepage": "https://github.com/bedrock-apis/bapi-tool#readme",
-  "peerDependencies": {
-    "@oxc-project/runtime": "0.66.0"
-  },
-  "devDependencies": {
-    "@types/node": "22.14.1",
-    "oxlint": "^0.16.5",
-    "prettier": "3.3.2",
-    "rolldown": "1.0.0-beta.8"
-  },
-  "dependencies": {
-    "chokidar": "4.0.3",
-    "commander": "^13.1.0",
-    "comment-json": "^4.2.3",
-    "jsonverify": "^1.0.1",
-    "jszip": "^3.10.1",
-    "picocolors": "^1.1.1"
-  },
-  "prettier": {
-    "trailingComma": "es5",
-    "tabWidth": 4,
-    "semi": true,
-    "quoteProps": "consistent",
-    "singleQuote": true,
-    "endOfLine": "crlf"
-  },
-  "packageManager": "pnpm@10.8.0+sha512.0e82714d1b5b43c74610193cb20734897c1d00de89d0e18420aebc5977fa13d780a9cb05734624e81ebd81cc876cd464794850641c48b9544326b5622ca29971"
+    "name": "bapi-tool",
+    "version": "1.0.0",
+    "description": "",
+    "main": "dist/index.js",
+    "scripts": {
+        "build": "pnpm rolldown -c",
+        "link": "pnpm link -l",
+        "format": "npx prettier src --write"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/bedrock-apis/bapi-tool.git"
+    },
+    "bin": {
+        "bapi": "./bin/bapi"
+    },
+    "author": "conmaster2112",
+    "license": "Apache-2.0",
+    "bugs": {
+        "url": "https://github.com/bedrock-apis/bapi-tool/issues"
+    },
+    "homepage": "https://github.com/bedrock-apis/bapi-tool#readme",
+    "peerDependencies": {
+        "@oxc-project/runtime": "0.66.0"
+    },
+    "devDependencies": {
+        "@types/node": "22.14.1",
+        "oxlint": "^0.16.5",
+        "prettier": "3.3.2",
+        "rolldown": "1.0.0-beta.8"
+    },
+    "dependencies": {
+        "chokidar": "4.0.3",
+        "commander": "^13.1.0",
+        "comment-json": "^4.2.3",
+        "jsonverify": "^1.0.1",
+        "jszip": "^3.10.1",
+        "typescript": "^5.8.3",
+        "picocolors": "^1.1.1"
+    },
+    "prettier": {
+        "trailingComma": "all",
+        "tabWidth": 4,
+        "semi": true,
+        "quoteProps": "consistent",
+        "singleQuote": true,
+        "endOfLine": "crlf"
+    },
+    "packageManager": "pnpm@10.8.0+sha512.0e82714d1b5b43c74610193cb20734897c1d00de89d0e18420aebc5977fa13d780a9cb05734624e81ebd81cc876cd464794850641c48b9544326b5622ca29971"
 }

@@ -1,14 +1,15 @@
-import {defineConfig} from "rolldown";
-import {dependencies, devDependencies} from "./package.json";
+import { defineConfig } from 'rolldown';
+import { dependencies, devDependencies } from './package.json';
 
-const libNames = [...Reflect.ownKeys(dependencies), ...Reflect.ownKeys(devDependencies)].filter(e=>typeof e === "string");
+const libNames = [
+    ...Reflect.ownKeys(dependencies),
+    ...Reflect.ownKeys(devDependencies),
+].filter((e) => typeof e === 'string');
 
 export default defineConfig([
     {
-        external: [
-            new RegExp(`^(${libNames.join("|")}|node:)`)
-        ],
-        input: "./src/cli/index.ts",
+        external: [new RegExp(`^(${libNames.join('|')}|node:)`)],
+        input: './src/cli/index.ts',
         /*
         transform:{
             decorator: {
@@ -17,12 +18,12 @@ export default defineConfig([
             }
         },*/
         keepNames: true,
-        platform: "node",
+        platform: 'node',
         output: {
-            intro:"#!/usr/bin/env node\n", // Used to set a cli
-            file: "./bin/bapi",
+            intro: '#!/usr/bin/env node\n', // Used to set a cli
+            file: './bin/bapi',
             //dir: "./bin",
-            target: "esnext"
-        }
+            target: 'esnext',
+        },
     },
 ]);
