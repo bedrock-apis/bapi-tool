@@ -4,15 +4,14 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import util from 'node:util';
 import { start } from '../cli/init';
-import { scanForSymbolsUsedIn, ScanReportModules } from './main';
-import { ScanReportFormat } from './report-format';
+import { ScanReportFormat } from './enums';
+import { scanForSymbolsUsedIn } from './scan';
+import { ScanOptions, ScanReportModules } from './types';
 
 type ScanReportGenerator = (
-    modules: string[],
-    tsconfigPath: string,
     topFiles: number,
-    extensions: boolean,
     file: string | undefined,
+    scan: ScanOptions,
 ) => void;
 
 export const generateReportTypes: Record<
@@ -25,11 +24,9 @@ export const generateReportTypes: Record<
 };
 
 function generatePrettyReport(
-    modules: string[],
-    tsconfig: string,
     topFiles: number,
-    extensions: boolean,
     file: string | undefined,
+    scan: ScanOptions,
 ): void {
     if (file) {
         console.log('Report will be written to file', chalk.cyan(file));
@@ -37,20 +34,26 @@ function generatePrettyReport(
 
     const output = createOutput(file);
 
-    const report = scanForSymbolsUsedIn(
-        modules,
-        tsconfig,
-        extensions,
-        file ? console.log : output,
-    );
+    const report = scanForSymbolsUsedIn({
+        ...scan,
+        log: file ? console.log : output,
+    });
 
     const empty = !Object.keys(report.symbols).length;
     if (!file) {
         if (!empty) {
             console.log(report.symbols);
         } else {
-            emptyWarning(tsconfig, modules);
+            emptyWarning(scan.tsconfigPath, scan.moduleNames);
         }
+    }
+
+    if (file) {
+        console.log(
+            chalk.greenBright('Report written to'),
+            chalk.bold(path.resolve(file)),
+        );
+        chalk.level = 0;
     }
 
     const time = Date.now() - start;
@@ -58,66 +61,64 @@ function generatePrettyReport(
         chalk.greenBright('Done in'),
         chalk.bold((time / 1000).toFixed(2)) + chalk.greenBright('s'),
     );
-    if (file) {
-        console.log(
-            chalk.greenBright('Writting to'),
-            chalk.bold(path.resolve(file)),
-        );
-        chalk.level = 0;
-    }
 
     if (empty) return;
 
-    const usedSymbols = countSymbols(report.symbols);
-    const allSymbols = countSymbols(report.all);
+    const reportUsage = scan.reportUsage ?? true;
+    if (reportUsage) {
+        const usedSymbols = countSymbols(report.symbols);
+        const allSymbols = countSymbols(report.all);
 
-    output(' ');
-    output(chalk.bold(`Top ${chalk.yellow(topFiles)} most used symbols: `));
-    output(' ');
-    const mostUsedSymbols = Object.values(report.symbols)
-        .map((e) =>
-            [...e.entries()].map(([k, m]) => ({
-                symbol: k,
-                usages: m.usages,
-            })),
-        )
-        .flat()
-        .sort((a, b) => b.usages - a.usages)
-        .map((e) => `  ${chalk.bold(e.symbol)} ${chalk.yellow(e.usages)}`)
-        .slice(0, topFiles)
-        .join('\n');
+        output(' ');
+        output(chalk.bold(`Top ${chalk.yellow(topFiles)} most used symbols: `));
+        output(' ');
+        const mostUsedSymbols = Object.values(report.symbols)
+            .map((e) =>
+                [...e.entries()].map(([k, m]) => ({
+                    symbol: k,
+                    usages: m.usages,
+                })),
+            )
+            .flat()
+            .sort((a, b) => b.usages - a.usages)
+            .map((e) => `  ${chalk.bold(e.symbol)} ${chalk.yellow(e.usages)}`)
+            .slice(0, topFiles)
+            .join('\n');
 
-    output(mostUsedSymbols);
-    output(' ');
+        output(mostUsedSymbols);
+        output(' ');
 
-    if (file) output();
-    output(
-        `${chalk.bold('Total symbols usage')}: ${percent(usedSymbols, allSymbols)}`,
-    );
-    output(' ');
-    output(
-        Object.entries(report.symbols)
-            .map(([name, symbols]) => {
-                if (!report.all[name]) return;
+        if (file) output();
+        output(
+            `${chalk.bold('Total symbols usage')}: ${percent(usedSymbols, allSymbols)}`,
+        );
+        output(' ');
+        output(
+            Object.entries(report.symbols)
+                .map(([name, symbols]) => {
+                    if (!report.all[name]) return;
 
-                return `${chalk.bold(name)}: ${percent(symbols.size, report.all[name].size)}`;
-            })
-            .join('\n'),
-    );
+                    return `${chalk.bold(name)}: ${percent(symbols.size, report.all[name].size)}`;
+                })
+                .join('\n'),
+        );
+    }
 
     if (file) {
         output(' ');
         for (const [moduleName, parents] of Object.entries(report.byParent)) {
             output(' ');
             output(' ');
-            output('> ' + moduleName);
+            output(`### ${moduleName}`);
             output(' ');
             for (const [parent, symbols] of Object.entries(parents)) {
                 output(' ');
-                output(parent);
+                output(`## ${parent}`);
                 output(' ');
-                for (const [symbol, { usages }] of symbols) {
-                    output(' ' + symbol + ' ' + usages);
+                for (const [symbol, { usages, kind }] of symbols) {
+                    output(
+                        `-   ${symbol} ${reportUsage ? usages : ''}${scan.reportSyntaxKind ? ' ' + kind : ''}`,
+                    );
                 }
             }
         }
@@ -175,26 +176,19 @@ function countSymbols(symbols: ScanReportModules): number {
 }
 
 function percent(value: number, total: number): string {
+    if (!Number.isFinite(total)) total = value;
     return `${chalk.yellow(value + '/' + total)} symbols (${chalk.cyan(((value / total) * 100).toFixed(0) + '%')})`;
 }
 
 function generateJsonReport(
     space: undefined | number,
-    modules: string[],
-    tsconfig: string,
     _topFiles: number,
-    extensions: boolean,
     file: string | undefined,
+    scan: ScanOptions,
 ): void {
     const output = createOutput(file);
-
-    const report = scanForSymbolsUsedIn(
-        modules,
-        tsconfig,
-        extensions,
-        // Noop, to disable logs
-        () => void 0,
-    );
+    const log = file ? console.log : () => {};
+    const report = scanForSymbolsUsedIn({ ...scan, log });
 
     output(
         JSON.stringify(

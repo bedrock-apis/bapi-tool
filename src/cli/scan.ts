@@ -1,7 +1,6 @@
 import { createCommand } from 'commander';
-import { ScanReportFormat } from '../scan/report-format';
+import { ScanReportFormat, ScanSortMode } from '../scan/enums';
 import { validateEnum, validateInt } from '../utils';
-
 
 export default createCommand('scan')
     .description('Scans for ScriptAPI modules used in project')
@@ -15,7 +14,7 @@ export default createCommand('scan')
         '@minecraft/server,@minecraft/server-ui,@minecraft/server-net,@minecraft/server-admin,@minecraft/common',
     )
     .option(
-        `--format <${Object.values(ScanReportFormat).join('|')}>`,
+        `--format [${Object.values(ScanReportFormat).join('|')}]`,
         `output format.`,
         validateEnum(ScanReportFormat),
         ScanReportFormat.Pretty,
@@ -36,16 +35,49 @@ export default createCommand('scan')
         'if provided, writes output to file instead of stdout',
         undefined,
     )
-    .action(({ tsconfig, modules, format, topSymbols, extensions, file }) => {
-        import('../scan/report')
-            .then((mod) =>
-                mod.generateReportTypes[format as ScanReportFormat](
-                    modules.split(','),
-                    tsconfig,
-                    topSymbols,
-                    extensions,
-                    file,
-                ),
-            )
-            .catch(console.error);
-    });
+    .option(
+        `--sort [${Object.values(ScanSortMode).join('|')}]`,
+        'sort mode',
+        validateEnum(ScanSortMode),
+        ScanSortMode.Size,
+    )
+    .option(
+        '--syntaxKind',
+        'whenether to report syntax kind of symbol or not',
+        false,
+    )
+    .option(
+        '--noReportUsage',
+        'whenether to report usage and top stats or not',
+        false,
+    )
+    .action(
+        ({
+            tsconfig,
+            modules,
+            format,
+            topSymbols,
+            extensions,
+            file,
+            sort,
+            syntaxKind,
+            noReportUsage,
+        }) => {
+            import('../scan/report')
+                .then((mod) =>
+                    mod.generateReportTypes[format as ScanReportFormat](
+                        topSymbols,
+                        file,
+                        {
+                            moduleNames: modules.split(','),
+                            tsconfigPath: tsconfig,
+                            extensions,
+                            sortMode: sort,
+                            reportSyntaxKind: syntaxKind,
+                            reportUsage: !noReportUsage,
+                        },
+                    ),
+                )
+                .catch(console.error);
+        },
+    );

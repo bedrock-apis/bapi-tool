@@ -1,6 +1,14 @@
 import chalk from 'chalk';
 import path from 'node:path';
 import ts from 'typescript';
+import { ScanSortMode } from './enums';
+import { sortModules, sortSymbolsByParent } from './sort';
+import {
+    ScanOptions,
+    ScanReport,
+    ScanReportModules,
+    ScanReportSymbol,
+} from './types';
 
 export function createProgram(
     tsconfigPath: string,
@@ -40,35 +48,22 @@ export function createProgram(
     return program;
 }
 
-export interface ScanReport {
-    symbols: ScanReportModules;
-    byParent: ScanReportSymbolsByParent;
-    all: ScanReportModules;
-}
-
-export type ScanReportSymbolsByParent = Record<string, ScanReportModules>;
-
-type ScanReportSymbols = Map<string, ScanReportSymbol>;
-
-export type ScanReportModules = Record<string, ScanReportSymbols>;
-
-export interface ScanReportSymbol {
-    usages: number;
-}
-
-export function scanForSymbolsUsedIn(
-    moduleNames: string[],
-    tsconfigPath: string,
+export function scanForSymbolsUsedIn({
+    moduleNames,
+    tsconfigPath,
     extensions = false,
     log = console.log,
     program = createProgram(tsconfigPath, log),
-): ScanReport {
+    sortMode = ScanSortMode.Size,
+}: ScanOptions): ScanReport {
     const checker = program.getTypeChecker();
     log(
         'Scanning for',
         moduleNames.map((e) => chalk.cyan(e)).join(' '),
         'with extensions',
         extensions ? chalk.greenBright('enabled') : 'disabled',
+        'and sort mode',
+        chalk.cyan(sortMode),
     );
 
     const usedSymbols: ScanReportModules = {};
@@ -115,9 +110,9 @@ export function scanForSymbolsUsedIn(
     }
 
     return {
-        symbols: sortModules(usedSymbols),
-        byParent: sortSymbolsByParent(usedSymbolsByParent),
-        all: sortModules(allSymbols),
+        symbols: sortModules(usedSymbols, sortMode),
+        byParent: sortSymbolsByParent(usedSymbolsByParent, sortMode),
+        all: sortModules(allSymbols, sortMode),
     };
 
     function addSymbol(
@@ -156,7 +151,9 @@ export function scanForSymbolsUsedIn(
                     ts.isFunctionTypeNode(e.parent) ||
                     ts.isImportClause(e.parent) ||
                     ts.isMethodDeclaration(e.parent) ||
-                    ts.isConstructorDeclaration(e.parent)
+                    ts.isConstructorDeclaration(e.parent) ||
+                    ts.isTypeParameterDeclaration(e.parent) ||
+                    ts.SyntaxKind.TypeParameter === e.kind
                 )
                     return;
 
@@ -164,6 +161,16 @@ export function scanForSymbolsUsedIn(
                     ts.isClassDeclaration(e.parent) ||
                     ts.isEnumDeclaration(e.parent) ||
                     ts.isInterfaceDeclaration(e.parent);
+
+                if (
+                    hasParent &&
+                    !e.parent.modifiers?.find(
+                        (e) => e.kind === ts.SyntaxKind.ExportKeyword,
+                    )
+                )
+                    return;
+
+                if (!hasParent && !ts.isSourceFile(e.parent)) return;
 
                 const parent =
                     hasParent && e.parent.name
@@ -174,22 +181,29 @@ export function scanForSymbolsUsedIn(
                     parent: parent,
                     name: symbol.getName(),
                     module: moduleName ?? sourceFileName,
+                    kind: ts.SyntaxKind[e.kind],
                 };
             })
             .filter((e) => !!e);
 
         for (const symbol of symbols) {
+            const kind = symbol.kind;
             const parent =
                 typeof symbol.parent === 'string' ? symbol.parent : 'global';
 
             byParent[symbol.module] ??= {};
             byParent[symbol.module][parent] ??= new Map();
-            addSymbolToSymbolsMap(byParent[symbol.module][parent], symbol.name);
+            addSymbolToSymbolsMap(
+                byParent[symbol.module][parent],
+                symbol.name,
+                kind,
+            );
 
             to[symbol.module] ??= new Map();
             addSymbolToSymbolsMap(
                 to[symbol.module],
                 symbol.parent ? symbol.parent + '.' + symbol.name : symbol.name,
+                kind,
             );
         }
     }
@@ -197,9 +211,10 @@ export function scanForSymbolsUsedIn(
     function addSymbolToSymbolsMap(
         map: Map<string, ScanReportSymbol>,
         name: string,
+        kind: string,
     ): void {
         const symbol = map.get(name);
-        if (!symbol) map.set(name, { usages: 1 });
+        if (!symbol) map.set(name, { usages: 1, kind });
         else symbol.usages++;
     }
 
@@ -219,28 +234,4 @@ export function scanForSymbolsUsedIn(
             if (symbol) addSymbol(symbol);
         }
     }
-}
-
-function sortModules(modules: ScanReportModules): ScanReportModules {
-    return Object.fromEntries(
-        Object.entries(modules)
-            .sort((a, b) => b[1].size - a[1].size)
-            .map(([k, v]) => [k, sortSymbols(v)]),
-    );
-}
-
-function sortSymbols(symbols: ScanReportSymbols): ScanReportSymbols {
-    return new Map(
-        [...symbols.entries()].sort((a, b) => b[1].usages - a[1].usages),
-    );
-}
-
-function sortSymbolsByParent(
-    parent: ScanReportSymbolsByParent,
-): ScanReportSymbolsByParent {
-    return Object.fromEntries(
-        Object.entries(parent)
-            .sort((a, b) => Object.keys(b[1]).length - Object.keys(a[1]).length)
-            .map(([k, v]) => [k, sortModules(v)]),
-    );
 }

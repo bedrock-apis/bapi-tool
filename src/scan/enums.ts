@@ -3,3 +3,8 @@ export enum ScanReportFormat {
     JsonFormatted = 'json-formatted',
     Pretty = 'pretty',
 }
+
+export enum ScanSortMode {
+    Size = 'size',
+    Key = 'key',
+}
