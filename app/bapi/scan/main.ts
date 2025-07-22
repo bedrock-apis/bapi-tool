@@ -1,6 +1,6 @@
 import { createCommand } from 'commander';
-import { ScanReportFormat, ScanSortMode } from '../scan/enums';
-import { validateEnum, validateInt } from '../utils';
+import { ScanReportFormat, ScanSortMode } from './enums';
+import { validateEnum, validateInt } from './utils';
 
 export default createCommand('scan')
     .description('Scans for ScriptAPI modules used in project')

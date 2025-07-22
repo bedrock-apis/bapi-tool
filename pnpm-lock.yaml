@@ -11,6 +11,9 @@ importers:
       '@oxc-project/runtime':
         specifier: 0.66.0
         version: 0.66.0
+      bapi-tool:
+        specifier: 'link:'
+        version: 'link:'
       chalk:
         specifier: ^5.4.1
         version: 5.4.1
@@ -29,9 +32,6 @@ importers:
       jszip:
         specifier: ^3.10.1
         version: 3.10.1
-      typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
     devDependencies:
       '@types/node':
         specifier: 22.14.1
@@ -45,6 +45,9 @@ importers:
       rolldown:
         specifier: 1.0.0-beta.8
         version: 1.0.0-beta.8(typescript@5.8.3)
+      typescript:
+        specifier: ^5.8.3
+        version: 5.8.3
 
 packages:
 

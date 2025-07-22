@@ -1,4 +1,4 @@
-import "./init";
+import "../shared/init";
 import { createCommand } from 'commander';
 import scanCommand from "./scan";
 

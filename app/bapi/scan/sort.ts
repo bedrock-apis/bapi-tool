@@ -11,16 +11,16 @@ function sort(
     keyB: string,
     sizeB: number,
     mode: ScanSortMode,
-) {
+): number {
     if (mode === ScanSortMode.Key) return sortByKey(keyA, keyB);
     return sortBySize(sizeA, sizeB);
 }
 
-function sortBySize(sizeA: number, sizeB: number) {
+function sortBySize(sizeA: number, sizeB: number): number {
     return sizeB - sizeA;
 }
 
-function sortByKey(keyA: string, keyB: string) {
+function sortByKey(keyA: string, keyB: string): number {
     return keyA.localeCompare(keyB);
 }
 

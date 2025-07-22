@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import util from 'node:util';
-import { start } from '../cli/init';
+import { start } from '../../shared';
 import { ScanReportFormat } from './enums';
 import { scanForSymbolsUsedIn } from './scan';
 import { ScanOptions, ScanReportModules } from './types';
@@ -126,7 +126,7 @@ function generatePrettyReport(
     }
 }
 
-function emptyWarning(tsconfig: string, modules: string[]) {
+function emptyWarning(tsconfig: string, modules: string[]): void {
     const nonexistent = getNonExistentModules(tsconfig, modules);
 
     if (nonexistent.size) {
@@ -140,7 +140,7 @@ function emptyWarning(tsconfig: string, modules: string[]) {
     );
 }
 
-function getNonExistentModules(tsconfig: string, modules: string[]) {
+function getNonExistentModules(tsconfig: string, modules: string[]): Set<string> {
     const nonexistent = new Set<string>();
     const require = createRequire(path.resolve(path.dirname(tsconfig)));
     for (const moduleName of modules) {
@@ -160,10 +160,10 @@ function getNonExistentModules(tsconfig: string, modules: string[]) {
     return nonexistent;
 }
 
-function createOutput(file: string | undefined) {
+function createOutput(file: string | undefined): (...values: unknown[])=>void {
     const fileStream = file && fs.createWriteStream(file);
     const output = file
-        ? (...values: unknown[]) => {
+        ? (...values: unknown[]): void => {
               const string = util.format(...values);
               if (fileStream) fileStream.write(string + '\n');
           }
@@ -187,7 +187,7 @@ function generateJsonReport(
     scan: ScanOptions,
 ): void {
     const output = createOutput(file);
-    const log = file ? console.log : () => {};
+    const log = file ? console.log : (): void => {};
     const report = scanForSymbolsUsedIn({ ...scan, log });
 
     output(

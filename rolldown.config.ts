@@ -14,8 +14,11 @@ fs.readdirSync('bin').forEach((e) =>
 
 export default defineConfig([
     {
-        external: [new RegExp(`^(${libNames.join('|')}|node:)`)],
-        input: './src/cli/bapi.ts',
+        external: new RegExp(`^(${libNames.join('|')}|node:)`),
+        input: {
+            bapi: "./app/bapi/main.ts",
+            nbt2mcstructure: "./app/nbt2mcstructure/main.ts"
+        },
         /*
         transform:{
             decorator: {
@@ -26,11 +29,9 @@ export default defineConfig([
         keepNames: true,
         platform: 'node',
         output: {
-            sourcemap: 'inline',
             intro: '#!/usr/bin/env node\n', // Used to set a cli
             dir: './bin',
             minify: true,
-            target: 'esnext',
         },
     },
 ]);
